@@ -12,8 +12,8 @@ artykuly_relacja = Table(
     'lista_dodanie', Base.metadata,
     Column('zamowienie_id', Integer, ForeignKey('zamowienie.id')),
     Column('artykul_id', Integer, ForeignKey('artykul_lista.id')),
-    Column("cena_jednostkowa", Integer, default=0),
-    Column('ilosc_elem', Integer, default=1)
+    Column("cena_jednostkowa", Integer, server_default="0"),
+    Column("ilosc_artykulu", Integer, server_default="1")
 )
 
 class Kupujacy(Base):
@@ -28,16 +28,7 @@ class Kategoria(Base):
     id = Column(Integer, primary_key=True)
     nazwa = Column(String)
 
-    typ = relationship('Typ', back_populates='kategoria')
-
-class Typ(Base):
-    __tablename__ = 'typ'
-    id = Column(Integer, primary_key=True)
-    nazwa = Column(String)
-    id_kategoria = Column(Integer, ForeignKey('kategoria.id'))
-
-    kategoria = relationship('Kategoria', back_populates='typ')
-    art_lista = relationship('Artykul_Lista', back_populates='typ')
+    art_lista = relationship('Artykul_Lista', back_populates='kategoria')
     
 class Sklep(Base):
     __tablename__ = 'sklep'
@@ -62,23 +53,44 @@ class Zamowienie(Base):
     kupujacy_id = Column(Integer, ForeignKey('kupujacy.id'))  # Klucz obcy do tabeli Firma
     sklep_id = Column(Integer, ForeignKey('sklep.id'))  # Klucz obcy do tabeli Firma
     
+    artykuly = relationship('Artykul_Lista', secondary=artykuly_relacja, backref='zamowienia', cascade="all, delete")
     kupujacy = relationship('Kupujacy', back_populates='zamowienia')
     sklep = relationship('Sklep', back_populates='zamowienia')
+
+    def oblicz_cene(self, session):
+        result = session.execute(
+            select(
+                artykuly_relacja.c.cena_jednostkowa,
+                artykuly_relacja.c.ilosc_artykulu
+            ).where(artykuly_relacja.c.zamowienie_id == self.id)
+        ).fetchall()
+        rabat_proc = 1 - self.rabat_procent/100 if self.rabat_procent else 1
+        return sum(cena* ilosc for cena, ilosc in result)* rabat_proc  - self.rabat_j
+
+    def get_ilosc_artykul(self, artykul, session):
+        # Pobiera ilość danego elementu w projekcie
+        wynik = self._get_zamowienie_artykul_miejsce(artykul, session)
+        return wynik[3] if wynik else 1
+
+    def _get_zamowienie_artykul_miejsce(self, artykul, session):
+        stmt = select(artykuly_relacja).where(artykuly_relacja.c.zamowienie_id == self.id, artykuly_relacja.c.artykul_id == artykul.id) # Tworzenie zapytania select
+        wynik = session.execute(stmt).fetchone()
+        return wynik
 
 class Artykul_Lista(Base):
     __tablename__ = 'artykul_lista'
     id = Column(Integer, primary_key=True)
-    typ_id = Column(Integer, ForeignKey('typ.id'))
-    firma_id = Column(Integer, ForeignKey('firma.id'))
+    kategoria_id = Column(Integer, ForeignKey('kategoria.id'))
+    firma_id = Column(Integer, ForeignKey('firma.id'), default=None)
     artykul = Column(String)
     kolor = Column(String, default=None)
     szczegoly = Column(String, default=None)
 
-    typ = relationship('Typ', back_populates='art_lista')
+    kategoria = relationship('Kategoria', back_populates='art_lista')
     firma = relationship('Firma', back_populates='art_lista')
 
 def SQLconnect(dsc):
-    db_path = os.path.join(dsc, '3DPP.db')
+    db_path = os.path.join(dsc, '3DSBM.db')
     engine = create_engine(f'sqlite:///{db_path}')
     Base.metadata.create_all(engine)
 
@@ -86,21 +98,20 @@ def SQLconnect(dsc):
     return Session()
 
 def Test(session):
-    kupujacy_1 = Kupujacy(nazwa="Patryk")
-    firma_1 = Firma(nazwa="Polgam")
-    sklep1 = Sklep(nazwa="Allegro")
-    kategoria_1 = Kategoria(nazwa='narzędzia')
-    typ_1 = Typ(nazwa='pendzel', kategoria=kategoria_1)
-    art_1 = Artykul_Lista(typ=typ_1, firma=firma_1, artykul="Klej")
-    zamow_1 = Zamowienie(kupujacy=kupujacy_1, sklep=sklep1)
+    kupujacy_1 = Kupujacy(nazwa="F3irma")
+    sklep1 = Sklep(nazwa="Te2mu")
+    firma_1 = Firma(nazwa="Prusa4")
+    kategoria_1 = Kategoria(nazwa="maszyny")
+    art_1 = Artykul_Lista(artykul="Azbest", kategoria=kategoria_1)
+    zamow_1 = Zamowienie(data=datetime.date(2022,6,18), kupujacy= kupujacy_1, sklep=sklep1)
     
-    session.add_all([kupujacy_1, firma_1, sklep1, kategoria_1, typ_1, art_1, zamow_1])
+    session.add_all([kupujacy_1, firma_1, sklep1, kategoria_1, art_1, zamow_1])
     session.commit() # Ważne!
 
     session.execute(artykuly_relacja.insert().values(
         zamowienie_id=zamow_1.id,
         artykul_id=art_1.id,
-        cena_jednostkowa=1234
+        cena_jednostkowa=21
     ))
     session.commit() # Ważne!
 

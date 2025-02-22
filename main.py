@@ -70,28 +70,28 @@ class FolderApp:
 
         tree = ttk.Treeview(parent_frame, columns=("id_artykul", 'Cena', 'Ilosc', "Kategoria", 'Marka', 'Artykul', 'Kolor', 'Szczegoly'), show='headings')
 
-        tree.column('id_artykul', width=2, anchor='e')
-        tree.heading('id_artykul', text='ID artykulu', anchor='center')
+        tree.column('id_artykul', width=50, anchor='e')
+        tree.heading('id_artykul', text='ID', anchor='center')
 
-        tree.column('Cena', width=2, anchor='e')
+        tree.column('Cena', width=100, anchor='e')
         tree.heading('Cena', text='Cena', anchor='center')
 
-        tree.column('Ilosc', width=2, anchor='e')
+        tree.column('Ilosc', width=100, anchor='e')
         tree.heading('Ilosc', text='Ilosc', anchor='center')
 
-        tree.column('Kategoria', width=2, anchor='e')
+        tree.column('Kategoria', width=100, anchor='e')
         tree.heading('Kategoria', text='Kategoria', anchor='center')
 
-        tree.column('Marka', width=2, anchor='e')
+        tree.column('Marka', width=100, anchor='e')
         tree.heading('Marka', text='Marka', anchor='center')
 
-        tree.column('Artykul', width=2, anchor='e')
+        tree.column('Artykul', width=100, anchor='e')
         tree.heading('Artykul', text='Artykul', anchor='center')     
 
-        tree.column('Kolor', width=2, anchor='e')
+        tree.column('Kolor', width=100, anchor='e')
         tree.heading('Kolor', text='Kolor', anchor='center')   
 
-        tree.column('Szczegoly', width=2, anchor='e')
+        tree.column('Szczegoly', width=300, anchor='e')
         tree.heading('Szczegoly', text='Szczegoly', anchor='center')
 
         tree.pack(expand=True, fill='both')
@@ -104,10 +104,11 @@ class FolderApp:
 
         tree = ttk.Treeview(parent_frame, columns=('id', 'name'), show='headings')
         tree.column('id', width=10, anchor='e')
-        tree.heading('id', text='ID', anchor='center')
+        tree.heading('id', text='ID', anchor='e')
 
-        tree.column('name', width=30, anchor='e')
-        tree.heading('name', text='Nazwa', anchor='center')
+        tree.column('name', width=30, anchor='w')
+        tree.heading('name', text='Nazwa', anchor='w')
+        tree.pack(expand=True, fill='both')
 
         return tree  
 
@@ -117,25 +118,25 @@ class FolderApp:
         tree = ttk.Treeview(parent_frame, columns=("id_zamowiania", 'Data', 'Kupujacy', 'Sklep','Rabat jednostkowy','Rabat procentowy', 'Cena'), show='headings')
         label.pack(pady=5)
 
-        tree.column('id_zamowiania', width=2, anchor='e')
+        tree.column('id_zamowiania', width=50, anchor='e')
         tree.heading('id_zamowiania', text='id_zamowiania', anchor='center')
 
-        tree.column('Data', width=2, anchor='e')
+        tree.column('Data', width=100, anchor='e')
         tree.heading('Data', text='Data', anchor='center')
 
-        tree.column('Kupujacy', width=2, anchor='e')
+        tree.column('Kupujacy', width=100, anchor='w')
         tree.heading('Kupujacy', text='Kupujacy', anchor='center')
 
-        tree.column('Sklep', width=2, anchor='e')
+        tree.column('Sklep', width=100, anchor='w')
         tree.heading('Sklep', text='Sklep', anchor='center')
 
-        tree.column('Rabat jednostkowy', width=2, anchor='e')
+        tree.column('Rabat jednostkowy', width=100, anchor='e')
         tree.heading('Rabat jednostkowy', text='Rabat jednostkowy', anchor='center')        
 
-        tree.column('Rabat procentowy', width=2, anchor='e')
+        tree.column('Rabat procentowy', width=100, anchor='e')
         tree.heading('Rabat procentowy', text='Rabat procentowy', anchor='center')
 
-        tree.column('Cena', width=2, anchor='e')
+        tree.column('Cena', width=100, anchor='e')
         tree.heading('Cena', text='Cena', anchor='center')
 
         tree.pack(expand=True, fill='both')
@@ -225,8 +226,8 @@ class FolderApp:
         self.kupujacy_tree = self.create_name_tree(self.kupujacy_frame, 'Kupujacy')
         self.sklepy_tree = self.create_name_tree(self.sklepy_frame, 'Sklepy')
 
-        self.kupujacy_tree.pack(side='left', expand=True, fill='both', padx=10, pady=20)
-        self.sklepy_tree.pack(side='left', expand=True, fill='both', padx=10, pady=20)
+        self.kupujacy_tree.pack(side='left', expand=True, fill='both', padx=5, pady=5)
+        self.sklepy_tree.pack(side='left', expand=True, fill='both', padx=5, pady=5)
         self.load_kupujacy()
         self.load_sklepy()
 
@@ -315,13 +316,13 @@ class FolderApp:
         self.dodaj_sklep_inside_icon = PhotoImage(file=os.path.join(self.dsc, "image", "delete_project_icon.png")).subsample(20, 20)
 
         self.add_button = ttk.Button(self.buttom_frame_add_zamowienia, text="refresh", command=self.refresh, width = 10, image=self.add_zamowienie_inside_icon, compound="left")
-        self.add_button.pack(side='top', padx=1, pady=3)
+        self.add_button.pack(side='top', padx=1, pady=(3,40))
         self.add_button = ttk.Button(self.buttom_frame_add_zamowienia, text="refresh", command=self.refresh, width = 10, image=self.rezygnacja_zamowienie_inside_icon, compound="left")
         self.add_button.pack(side='top', padx=1, pady=3)        
         self.add_button = ttk.Button(self.buttom_frame_add_zamowienia, text="refresh", command=self.refresh, width = 10, image=self.dodaj_kupujacego_inside_icon, compound="left")
         self.add_button.pack(side='top', padx=1, pady=3)            
         self.add_button = ttk.Button(self.buttom_frame_add_zamowienia, text="refresh", command=self.refresh, width = 10, image=self.dodaj_sklep_inside_icon, compound="left")
-        self.add_button.pack(side='top', padx=1, pady=3)    
+        self.add_button.pack(side='bottom', padx=1, pady=3)    
 if __name__ == "__main__":
     root = TkinterDnD.Tk()  # Use TkinterDnD for DnD
     root.geometry("1280x720+0+0")

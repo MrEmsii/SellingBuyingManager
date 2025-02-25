@@ -65,6 +65,15 @@ class FolderApp:
         self.button_del(self.buttom_frame)
         self.main_frame.grid(row=0, column=1, columnspan=3, rowspan=5, sticky="nsew", padx=5, pady=5, ipadx=5)
 
+    def backButton(self):
+        for widget in self.main_frame.winfo_children():
+            widget.destroy()
+
+        for widget in self.buttom_frame.winfo_children():
+            widget.destroy()
+
+        self.start_frame()
+        self.load_zamowienia()
 
     def create_inside_tree(self, parent_frame, label_text):
         label = ttk.Label(parent_frame, text=label_text, font=("Arial", 12))
@@ -114,7 +123,6 @@ class FolderApp:
 
         return tree  
 
-
     def create_zamowienie_tree(self, parent_frame, label_text):
         label = ttk.Label(parent_frame, text=label_text, font=("Arial", 12))
         tree = ttk.Treeview(parent_frame, columns=("id_zamowiania", 'Data', 'Kupujacy', 'Sklep','Rabat jednostkowy','Rabat procentowy', 'Cena', "Cena_po_rabacie"), show='headings')
@@ -148,19 +156,6 @@ class FolderApp:
 
         return tree  
 
-    def load_sklepy(self):
-        for sklep in self.db_session.query(Sklep).all():
-            sklep_id = sklep.id if sklep.id else 0
-            nazwa = sklep.nazwa if sklep.nazwa else 'N/A'
-            self.sklepy_tree.insert('', 'end', values=(sklep_id, nazwa ))
-
-    def load_kupujacy(self):
-        for kupujacy in self.db_session.query(Kupujacy).all():
-            kupujacy_id = kupujacy.id if kupujacy.id else 0
-            nazwa = kupujacy.nazwa if kupujacy.nazwa else 'N/A'
-            self.kupujacy_tree.insert('', 'end', values=(kupujacy_id, nazwa ))
-
-
     def load_zamowienia(self):
         zamowienia = self.db_session.query(Zamowienie).all()
         zamowienia_data = []
@@ -181,6 +176,18 @@ class FolderApp:
 
         for z_id, data, kupujacy, sklep, rabat_1, rabat_2, cena, cena_rabat in zamowienia_data:
             self.zamowienia_tree.insert('', 'end', values=(z_id, data, kupujacy, sklep, rabat_1, rabat_2, cena, cena_rabat))
+
+    def load_sklepy(self):
+        for sklep in self.db_session.query(Sklep).all():
+            sklep_id = sklep.id if sklep.id else 0
+            nazwa = sklep.nazwa if sklep.nazwa else 'N/A'
+            self.sklepy_tree.insert('', 'end', values=(sklep_id, nazwa ))
+
+    def load_kupujacy(self):
+        for kupujacy in self.db_session.query(Kupujacy).all():
+            kupujacy_id = kupujacy.id if kupujacy.id else 0
+            nazwa = kupujacy.nazwa if kupujacy.nazwa else 'N/A'
+            self.kupujacy_tree.insert('', 'end', values=(kupujacy_id, nazwa ))
 
     def load_inside_zamowienie(self, id_zamowienia):
         self.inside_frame()
@@ -227,6 +234,7 @@ class FolderApp:
         self.buttons_add_zamowienia()
 
         self.kupujacy_frame = ttk.Frame(self.window, padding=5)
+
         self.sklepy_frame = ttk.Frame(self.window, padding=5)
 
         self.kupujacy_tree = self.create_name_tree(self.kupujacy_frame, 'Kupujacy')
@@ -270,18 +278,6 @@ class FolderApp:
 
     def refresh(self):
         return 0 
-
-    def backButton(self):
-        for widget in self.main_frame.winfo_children():
-            widget.destroy()
-
-        for widget in self.buttom_frame.winfo_children():
-            widget.destroy()
-
-        self.start_frame()
-        self.load_zamowienia()
-
-
 
     def buttons_main(self):
         #tworzenie przycisków w głównym menu

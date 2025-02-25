@@ -271,6 +271,14 @@ class FolderApp:
             self.db_session.commit()
             self.refresh()
 
+    def add_sklep(self):
+        sklep_name = simpledialog.askstring("Dodaj Sklep", "Podaj nazwę SKLEPU: \t\t\t")
+        if sklep_name is not None:
+            sklep = Sklep(nazwa=sklep_name)
+            self.db_session.add(sklep)
+            self.db_session.commit()
+            self.refresh()
+
     def mod_zamowienie(self):
         zamowienie_id = self.zamowienia_tree.item(self.zamowienia_tree.selection()[0], 'values')[0]
         obj = self.db_session.query(Zamowienie).filter_by(id=zamowienie_id).first()
@@ -346,14 +354,13 @@ class FolderApp:
 
     def button_add_sklep(self, frame):
         self.dodaj_sklep_inside_icon = PhotoImage(file=os.path.join(self.dsc, "image", "delete_project_icon.png")).subsample(20, 20)
-        self.add_button = ttk.Button(frame, text="Dodaj\nsklep", command=self.refresh, width = 10, image=self.dodaj_sklep_inside_icon, compound="left")
+        self.add_button = ttk.Button(frame, text="Dodaj\nsklep", command=self.add_sklep, width = 10, image=self.dodaj_sklep_inside_icon, compound="left")
         self.add_button.pack(side='top', padx=1, pady=3)    
 
     def button_refresh(self, frame):
         self.refresh_element_icon = PhotoImage(file=os.path.join(self.dsc, "image", "delete_project_icon.png")).subsample(20, 20)
         self.add_button = ttk.Button(frame, text="Odśwież", command=self.refresh, width = 10, image=self.refresh_element_icon, compound="left")
         self.add_button.pack(side='bottom', padx=1, pady=3)
-
 
 if __name__ == "__main__":
     root = TkinterDnD.Tk()  # Use TkinterDnD for DnD

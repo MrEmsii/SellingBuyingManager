@@ -9,7 +9,7 @@ class FolderApp:
         self.master = master
         self.dsc = os.path.dirname(__file__)
         self.style = ttk.Style()
-        master.tk.call('source', self.dsc + '/themes/awthemes/awdark.tcl')
+        master.tk.call('source', self.dsc + '/themes/awdark.tcl')
 
         self.style.theme_use("awdark")  # Use a modern theme
         self.style.configure("Treeview", background="#D8E8E8", foreground="black", rowheight=15, fieldbackground="#E8E8E8", font=('Arial', 8))

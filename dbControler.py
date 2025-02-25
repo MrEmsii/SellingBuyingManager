@@ -64,9 +64,12 @@ class Zamowienie(Base):
                 artykuly_relacja.c.ilosc_artykulu
             ).where(artykuly_relacja.c.zamowienie_id == self.id)
         ).fetchall()
+        return sum(cena* ilosc for cena, ilosc in result)
+    
+    def oblicz_cene_rabat(self, session):
         rabat_proc = 1 - self.rabat_procent/100 if self.rabat_procent else 1
-        return sum(cena* ilosc for cena, ilosc in result)* rabat_proc  - self.rabat_j
-
+        return self.oblicz_cene(session)* rabat_proc  - self.rabat_j
+    
     def get_ilosc_artykul(self, artykul, session):
         # Pobiera ilość danego elementu w projekcie
         wynik = self._get_zamowienie_artykul_miejsce(artykul, session)

@@ -18,6 +18,7 @@ class FolderApp:
         master.title("Selling/Buying Manager")
         master.iconbitmap(os.path.join(self.dsc, "image", "icon.ico"))
 
+        self.style.configure('TButton', justify="left", anchor='w')
         self.background_image = PhotoImage(file=os.path.join(self.dsc, "image", "background.png"))
         self.background_label = tk.Label(master, image=self.background_image)
         self.background_label.place(x=0, y=0, relwidth=1, relheight=1) 
@@ -33,7 +34,7 @@ class FolderApp:
         self.start_frame()
 
         # Grid ustawienia
-        self.buttom_frame.grid(row=0, column=0, rowspan=5, sticky="nsew",pady=5)
+        self.buttom_frame.grid(row=0, column=0, rowspan=5, sticky="nsew", pady=5)
 
         master.grid_rowconfigure(0, weight=2)
         master.grid_rowconfigure(1, weight=2)
@@ -59,8 +60,9 @@ class FolderApp:
 
         for widget in self.buttom_frame.winfo_children():
             widget.destroy()
+            
         self.buttons_inside()
-        self.button_del()
+        self.button_del(self.buttom_frame)
         self.main_frame.grid(row=0, column=1, columnspan=3, rowspan=5, sticky="nsew", padx=5, pady=5, ipadx=5)
 
 
@@ -115,30 +117,33 @@ class FolderApp:
 
     def create_zamowienie_tree(self, parent_frame, label_text):
         label = ttk.Label(parent_frame, text=label_text, font=("Arial", 12))
-        tree = ttk.Treeview(parent_frame, columns=("id_zamowiania", 'Data', 'Kupujacy', 'Sklep','Rabat jednostkowy','Rabat procentowy', 'Cena'), show='headings')
+        tree = ttk.Treeview(parent_frame, columns=("id_zamowiania", 'Data', 'Kupujacy', 'Sklep','Rabat jednostkowy','Rabat procentowy', 'Cena', "Cena_po_rabacie"), show='headings')
         label.pack(pady=5)
 
         tree.column('id_zamowiania', width=50, anchor='e')
-        tree.heading('id_zamowiania', text='id_zamowiania', anchor='center')
+        tree.heading('id_zamowiania', text='id_zamowiania', anchor='e')
 
-        tree.column('Data', width=100, anchor='e')
-        tree.heading('Data', text='Data', anchor='center')
+        tree.column('Data', width=100, anchor='w')
+        tree.heading('Data', text='Data', anchor='w')
 
         tree.column('Kupujacy', width=100, anchor='w')
-        tree.heading('Kupujacy', text='Kupujacy', anchor='center')
+        tree.heading('Kupujacy', text='Kupujacy', anchor='w')
 
         tree.column('Sklep', width=100, anchor='w')
-        tree.heading('Sklep', text='Sklep', anchor='center')
+        tree.heading('Sklep', text='Sklep', anchor='w')
 
         tree.column('Rabat jednostkowy', width=100, anchor='e')
-        tree.heading('Rabat jednostkowy', text='Rabat jednostkowy', anchor='center')        
+        tree.heading('Rabat jednostkowy', text='Rabat jednostkowy', anchor='e')        
 
         tree.column('Rabat procentowy', width=100, anchor='e')
-        tree.heading('Rabat procentowy', text='Rabat procentowy', anchor='center')
+        tree.heading('Rabat procentowy', text='Rabat procentowy', anchor='e')
 
         tree.column('Cena', width=100, anchor='e')
-        tree.heading('Cena', text='Cena', anchor='center')
+        tree.heading('Cena', text='Cena', anchor='e')
 
+        tree.column('Cena_po_rabacie', width=100, anchor='e')
+        tree.heading('Cena_po_rabacie', text='Cena po rabacie', anchor='e')
+        
         tree.pack(expand=True, fill='both')
 
         return tree  
@@ -167,14 +172,15 @@ class FolderApp:
             zamow_sklep = zamow.sklep.nazwa if zamow.sklep else None
             rabat_j = f"{zamow.rabat_j:.2f} PLN"
             rabat_proc = f"{zamow.rabat_procent :.0f} %"
-            zamow_cena = f"{zamow.oblicz_cene(self.db_session):.2f} PLN"
-            zamowienia_data.append((zamow_id, zamow_data, zamow_kupujacy, zamow_sklep, rabat_j, rabat_proc, zamow_cena))
+            zamow_cena = f"{zamow.oblicz_cene(self.db_session):,.2f} PLN".replace(",", " ")
+            zamow_cena_rabat = f"{zamow.oblicz_cene_rabat(self.db_session):,.2f} PLN".replace(",", " ")
+            zamowienia_data.append((zamow_id, zamow_data, zamow_kupujacy, zamow_sklep, rabat_j, rabat_proc, zamow_cena, zamow_cena_rabat))
 
         zamowienia_data.sort(key=lambda x:x[1])
         self.zamowienia_tree.delete(*self.zamowienia_tree.get_children())
 
-        for z_id, data, kupujacy, sklep, rabat_1, rabat_2, cena in zamowienia_data:
-            self.zamowienia_tree.insert('', 'end', values=(z_id, data, kupujacy, sklep, rabat_1, rabat_2, cena))
+        for z_id, data, kupujacy, sklep, rabat_1, rabat_2, cena, cena_rabat in zamowienia_data:
+            self.zamowienia_tree.insert('', 'end', values=(z_id, data, kupujacy, sklep, rabat_1, rabat_2, cena, cena_rabat))
 
     def load_inside_zamowienie(self, id_zamowienia):
         self.inside_frame()
@@ -285,13 +291,20 @@ class FolderApp:
 
         self.refresh_element_icon = PhotoImage(file=os.path.join(self.dsc, "image", "delete_project_icon.png")).subsample(20, 20)
         
-        self.add_button = ttk.Button(self.buttom_frame, text="Dodaj\nzamowienie", command=self.add_zamowienie, width = 10, image=self.add_zamowienie_icon, compound="left")
+        self.add_button = ttk.Button(self.buttom_frame, text="Dodaj\nzamowienie", command=self.add_zamowienie, width = 10, image=self.add_zamowienie_icon, compound="left",)
         self.add_button.pack(side='top', padx=1, pady=3)
         self.add_button = ttk.Button(self.buttom_frame, text="Edytuj\nzamowienie", command=self.mod_zamowienie, width = 10, image=self.edit_zamowienie_icon, compound="left")
         self.add_button.pack(side='top', padx=1, pady=3)
         self.add_button = ttk.Button(self.buttom_frame, text="Usuń\nzamowienie", command=self.delete_zamowienie, width = 10, image=self.delete_zamowienie_icon, compound="left")
         self.add_button.pack(side='top', padx=1, pady=3)
- 
+
+        self.add_button = ttk.Button(self.buttom_frame, text="Lista\nartykułów", command=self.refresh, width = 10, image=self.delete_zamowienie_icon, compound="left")
+        self.add_button.pack(side='top', padx=1, pady=(30,3))
+        self.add_button = ttk.Button(self.buttom_frame, text="Lista\nsklepów", command=self.refresh, width = 10, image=self.delete_zamowienie_icon, compound="left")
+        self.add_button.pack(side='top', padx=1, pady=3)
+        self.add_button = ttk.Button(self.buttom_frame, text="Lista\nkupujacych", command=self.refresh, width = 10, image=self.delete_zamowienie_icon, compound="left")
+        self.add_button.pack(side='top', padx=1, pady=3)
+
         self.add_button = ttk.Button(self.buttom_frame, text="Odśwież", command=self.refresh, width = 10, image=self.refresh_element_icon, compound="left")
         self.add_button.pack(side='bottom', padx=1, pady=3)
 
@@ -299,14 +312,14 @@ class FolderApp:
         self.edit_zamowienie_icon = PhotoImage(file=os.path.join(self.dsc, "image", "edit_project_icon.png")).subsample(20, 20)
         self.delete_zamowienie_icon = PhotoImage(file=os.path.join(self.dsc, "image", "delete_project_icon.png")).subsample(20, 20)
 
-        self.add_button = ttk.Button(self.buttom_frame, text="Edytuj\nzamowienie", command=self.mod_zamowienie, width = 10, image=self.edit_zamowienie_icon, compound="left")
+        self.add_button = ttk.Button(self.buttom_frame, text="Dodaj\nartykuł", command=self.refresh, width = 10, image=self.edit_zamowienie_icon, compound="left")
         self.add_button.pack(side='top', padx=1, pady=3)
-        self.add_button = ttk.Button(self.buttom_frame, text="Usuń\nzamowienie", command=self.delete_zamowienie, width = 10, image=self.delete_zamowienie_icon, compound="left")
+        self.add_button = ttk.Button(self.buttom_frame, text="Usuń\nartykuł", command=self.refresh, width = 10, image=self.delete_zamowienie_icon, compound="left")
         self.add_button.pack(side='top', padx=1, pady=3)
  
-    def button_del(self):
+    def button_del(self, frame):
         self.backButton_icon = PhotoImage(file=os.path.join(self.dsc, "image", "delete_project_icon.png")).subsample(20, 20)
-        self.add_button = ttk.Button(self.buttom_frame, text="Wróć", command=self.backButton, width = 10, image=self.backButton_icon, compound="left")
+        self.add_button = ttk.Button(frame, text="Wróć", command=self.backButton, width = 10, image=self.backButton_icon, compound="left")
         self.add_button.pack(side='bottom', padx=1, pady=3) 
 
     def buttons_add_zamowienia(self):
@@ -315,11 +328,11 @@ class FolderApp:
         self.dodaj_kupujacego_inside_icon = PhotoImage(file=os.path.join(self.dsc, "image", "delete_project_icon.png")).subsample(20, 20)
         self.dodaj_sklep_inside_icon = PhotoImage(file=os.path.join(self.dsc, "image", "delete_project_icon.png")).subsample(20, 20)
 
-        self.add_button = ttk.Button(self.buttom_frame_add_zamowienia, text="refresh", command=self.refresh, width = 10, image=self.add_zamowienie_inside_icon, compound="left")
-        self.add_button.pack(side='top', padx=1, pady=(3,40))
-        self.add_button = ttk.Button(self.buttom_frame_add_zamowienia, text="refresh", command=self.refresh, width = 10, image=self.rezygnacja_zamowienie_inside_icon, compound="left")
+        self.add_button = ttk.Button(self.buttom_frame_add_zamowienia, text="Zatwierdź", command=self.refresh, width = 10, image=self.add_zamowienie_inside_icon, compound="left")
+        self.add_button.pack(side='top', padx=1, pady=3)
+        self.add_button = ttk.Button(self.buttom_frame_add_zamowienia, text="Dodaj\nkupujący", command=self.refresh, width = 10, image=self.rezygnacja_zamowienie_inside_icon, compound="left")
         self.add_button.pack(side='top', padx=1, pady=3)        
-        self.add_button = ttk.Button(self.buttom_frame_add_zamowienia, text="refresh", command=self.refresh, width = 10, image=self.dodaj_kupujacego_inside_icon, compound="left")
+        self.add_button = ttk.Button(self.buttom_frame_add_zamowienia, text="Dodaj\nsklep", command=self.refresh, width = 10, image=self.dodaj_kupujacego_inside_icon, compound="left")
         self.add_button.pack(side='top', padx=1, pady=3)            
         self.add_button = ttk.Button(self.buttom_frame_add_zamowienia, text="refresh", command=self.refresh, width = 10, image=self.dodaj_sklep_inside_icon, compound="left")
         self.add_button.pack(side='bottom', padx=1, pady=3)    

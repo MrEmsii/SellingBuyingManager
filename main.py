@@ -54,15 +54,21 @@ class FolderApp:
         self.zamowienia_tree.bind("<Double-1>", self.on_double_click)
         self.main_frame.grid(row=0, column=1, columnspan=3, rowspan=5, sticky="nsew", padx=5, pady=5, ipadx=5)
 
-    def inside_frame(self):
+    def inside_frame(self, frame):
         for widget in self.main_frame.winfo_children():
             widget.destroy()
 
         for widget in self.buttom_frame.winfo_children():
             widget.destroy()
             
-        self.buttons_inside()
-        self.button_del(self.buttom_frame)
+        if frame == "zamowienia":
+            self.buttons_inside()
+        elif frame == "kupujacy":
+            self.button_add_kupujacy(self.buttom_frame)
+        elif frame == "sklepy":
+            self.button_add_sklep(self.buttom_frame) 
+
+        self.button_back(self.buttom_frame)
         self.main_frame.grid(row=0, column=1, columnspan=3, rowspan=5, sticky="nsew", padx=5, pady=5, ipadx=5)
 
     def backButton(self):
@@ -114,10 +120,10 @@ class FolderApp:
         label.pack(pady=5)
 
         tree = ttk.Treeview(parent_frame, columns=('id', 'name'), show='headings')
-        tree.column('id', width=10, anchor='e')
+        tree.column('id', width=30, anchor='e')
         tree.heading('id', text='ID', anchor='e')
 
-        tree.column('name', width=30, anchor='w')
+        tree.column('name', width=200, anchor='w')
         tree.heading('name', text='Nazwa', anchor='w')
         tree.pack(expand=True, fill='both')
 
@@ -177,22 +183,38 @@ class FolderApp:
         for z_id, data, kupujacy, sklep, rabat_1, rabat_2, cena, cena_rabat in zamowienia_data:
             self.zamowienia_tree.insert('', 'end', values=(z_id, data, kupujacy, sklep, rabat_1, rabat_2, cena, cena_rabat))
 
+
     def load_sklepy(self):
+        sklepy = self.db_session.query(Sklep).all()
+        sklepy_data = []
+
+        for sklep in sklepy:
+            sklep_id = sklep.id
+            sklep_nazwa = sklep.nazwa
+            sklepy_data.append((sklep_id, sklep_nazwa))
+
         self.sklepy_tree.delete(*self.sklepy_tree.get_children())
-        for sklep in self.db_session.query(Sklep).all():
-            sklep_id = sklep.id if sklep.id else 0
-            nazwa = sklep.nazwa if sklep.nazwa else 'N/A'
-            self.sklepy_tree.insert('', 'end', values=(sklep_id, nazwa ))
+
+        for sklep_id, sklep_nazwa in sklepy_data:
+            self.sklepy_tree.insert('', 'end', values=(sklep_id, sklep_nazwa))
 
     def load_kupujacy(self):
+        kupujacy = self.db_session.query(Kupujacy).all()
+        kupujacy_data = []
+
+        for kup in kupujacy:
+            kup_id = kup.id
+            kup_nazwa = kup.nazwa
+            kupujacy_data.append((kup_id, kup_nazwa))
+
         self.kupujacy_tree.delete(*self.kupujacy_tree.get_children())
-        for kupujacy in self.db_session.query(Kupujacy).all():
-            kupujacy_id = kupujacy.id if kupujacy.id else 0
-            nazwa = kupujacy.nazwa if kupujacy.nazwa else 'N/A'
-            self.kupujacy_tree.insert('', 'end', values=(kupujacy_id, nazwa ))
+
+        for kup_id, kup_nazwa in kupujacy_data:
+            self.kupujacy_tree.insert('', 'end', values=(kup_id, kup_nazwa))
+
 
     def load_inside_zamowienie(self, id_zamowienia):
-        self.inside_frame()
+        self.inside_frame("zamowienia")
         self.inside_tree = self.create_inside_tree(self.main_frame, 'Zamowienia') 
         self.inside_tree.delete(*self.inside_tree.get_children())
 
@@ -233,17 +255,14 @@ class FolderApp:
         self.background_label.place(x=0, y=0, relwidth=1, relheight=1) 
         
         self.buttom_frame_add_zamowienia = ttk.Frame(self.window, padding=(0,5))
-        self.buttons_add_zamowienia()
 
         self.kupujacy_frame = ttk.Frame(self.window, padding=5)
-
         self.sklepy_frame = ttk.Frame(self.window, padding=5)
 
-        self.kupujacy_tree = self.create_name_tree(self.kupujacy_frame, 'Kupujacy')
-        self.sklepy_tree = self.create_name_tree(self.sklepy_frame, 'Sklepy')
+        self.kupujacy_tree = self.create_name_tree(self.kupujacy_frame, "Kupujący")
+        self.sklepy_tree = self.create_name_tree(self.sklepy_frame, "Sklepy")
 
-        self.kupujacy_tree.pack(side='left', expand=True, fill='both', padx=5, pady=5)
-        self.sklepy_tree.pack(side='left', expand=True, fill='both', padx=5, pady=5)
+        self.buttons_add_zamowienia()
         self.load_kupujacy()
         self.load_sklepy()
 
@@ -269,7 +288,7 @@ class FolderApp:
             kupujacy = Kupujacy(nazwa=kupujacy_name)
             self.db_session.add(kupujacy)
             self.db_session.commit()
-            self.refresh()
+        self.load_kupujacy()    
 
     def add_sklep(self):
         sklep_name = simpledialog.askstring("Dodaj Sklep", "Podaj nazwę SKLEPU: \t\t\t")
@@ -277,15 +296,15 @@ class FolderApp:
             sklep = Sklep(nazwa=sklep_name)
             self.db_session.add(sklep)
             self.db_session.commit()
-            self.refresh()
+        self.load_sklepy()    
 
     def mod_zamowienie(self):
         zamowienie_id = self.zamowienia_tree.item(self.zamowienia_tree.selection()[0], 'values')[0]
         obj = self.db_session.query(Zamowienie).filter_by(id=zamowienie_id).first()
 
     def delete_zamowienie(self):
-        dialog = simpledialog.askstring("Usuń folder", "Czy jesteś pewien usunięcia projektu:\n\nCzynność NIE odwracalna\n\nNapisz YES lub TAK \t\t\t")
-        if dialog == "YES" or dialog == "TAK":
+        dialog = simpledialog.askstring("Usuń", "Czy jesteś pewien usunięcia projektu:\n\nCzynność NIE odwracalna\n\nNapisz YES lub TAK \t\t\t")
+        if dialog == "YES" or dialog == "TAK" or dialog == "tak" or dialog == "yes":
             zamowienie_id = self.zamowienia_tree.item(self.zamowienia_tree.selection()[0], 'values')[0]
             obj = self.db_session.query(Zamowienie).filter_by(id=zamowienie_id).first()
             self.db_session.delete(obj)
@@ -294,9 +313,17 @@ class FolderApp:
         self.load_zamowienia()
 
     def refresh(self):
-        self.load_kupujacy()
+        pass
+
+    def list_sklepy(self):
+        self.inside_frame("sklepy")
+        self.sklepy_tree = self.create_name_tree(self.main_frame, "Sklepy")
         self.load_sklepy()
-        self.load_zamowienia()
+
+    def list_kupujacy(self):
+        self.inside_frame("kupujacy")
+        self.kupujacy_tree = self.create_name_tree(self.main_frame, "Kupujacy")
+        self.load_kupujacy()
 
     def buttons_main(self):
         #tworzenie przycisków w głównym menu
@@ -313,18 +340,19 @@ class FolderApp:
 
         self.add_button = ttk.Button(self.buttom_frame, text="Lista\nartykułów", command=self.refresh, width = 10, image=self.delete_zamowienie_icon, compound="left")
         self.add_button.pack(side='top', padx=1, pady=(30,3))
-        self.add_button = ttk.Button(self.buttom_frame, text="Lista\nsklepów", command=self.refresh, width = 10, image=self.delete_zamowienie_icon, compound="left")
+        self.add_button = ttk.Button(self.buttom_frame, text="Lista\nsklepów", command=self.list_sklepy, width = 10, image=self.delete_zamowienie_icon, compound="left")
         self.add_button.pack(side='top', padx=1, pady=3)
-        self.add_button = ttk.Button(self.buttom_frame, text="Lista\nkupujacych", command=self.refresh, width = 10, image=self.delete_zamowienie_icon, compound="left")
+        self.add_button = ttk.Button(self.buttom_frame, text="Lista\nkupujacych", command=self.list_kupujacy, width = 10, image=self.delete_zamowienie_icon, compound="left")
         self.add_button.pack(side='top', padx=1, pady=3)
 
         self.button_refresh(self.buttom_frame)
 
     def buttons_inside(self):
         self.add_art_icon = PhotoImage(file=os.path.join(self.dsc, "image", "edit_project_icon.png")).subsample(20, 20)
+        self.delete_zamowienie_icon = PhotoImage(file=os.path.join(self.dsc, "image", "delete_project_icon.png")).subsample(20, 20)
+        
         self.add_button = ttk.Button(self.buttom_frame, text="Dodaj\nartykuł do \nzamowienia", command=self.refresh, width = 10, image=self.add_art_icon, compound="left")
         self.add_button.pack(side='top', padx=1, pady=3)
-        self.delete_zamowienie_icon = PhotoImage(file=os.path.join(self.dsc, "image", "delete_project_icon.png")).subsample(20, 20)
         self.add_button = ttk.Button(self.buttom_frame, text="Usuń\nartykuł", command=self.refresh, width = 10, image=self.delete_zamowienie_icon, compound="left")
         self.add_button.pack(side='top', padx=1, pady=3)
 
@@ -342,7 +370,7 @@ class FolderApp:
         self.add_button = ttk.Button(frame, text="Dodaj\nartykuł", command=self.refresh, width = 10, image=self.add_art_icon, compound="left")
         self.add_button.pack(side='top', padx=1, pady=3)
 
-    def button_del(self, frame):
+    def button_back(self, frame):
         self.backButton_icon = PhotoImage(file=os.path.join(self.dsc, "image", "delete_project_icon.png")).subsample(20, 20)
         self.add_button = ttk.Button(frame, text="Wróć", command=self.backButton, width = 10, image=self.backButton_icon, compound="left")
         self.add_button.pack(side='bottom', padx=1, pady=3) 
@@ -355,11 +383,12 @@ class FolderApp:
     def button_add_sklep(self, frame):
         self.dodaj_sklep_inside_icon = PhotoImage(file=os.path.join(self.dsc, "image", "delete_project_icon.png")).subsample(20, 20)
         self.add_button = ttk.Button(frame, text="Dodaj\nsklep", command=self.add_sklep, width = 10, image=self.dodaj_sklep_inside_icon, compound="left")
-        self.add_button.pack(side='top', padx=1, pady=3)    
+        self.add_button.pack(side='top', padx=1, pady=3)
+        
 
     def button_refresh(self, frame):
         self.refresh_element_icon = PhotoImage(file=os.path.join(self.dsc, "image", "delete_project_icon.png")).subsample(20, 20)
-        self.add_button = ttk.Button(frame, text="Odśwież", command=self.refresh, width = 10, image=self.refresh_element_icon, compound="left")
+        self.add_button = ttk.Button(frame, text="Odśwież", command=self.load_zamowienia, width = 10, image=self.refresh_element_icon, compound="left")
         self.add_button.pack(side='bottom', padx=1, pady=3)
 
 if __name__ == "__main__":

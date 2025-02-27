@@ -27,14 +27,14 @@ class FolderApp:
         self.db_session = SQLconnect(self.dsc)
 
         # Tworzenie okienka dla listy przycisków
-        self.buttom_frame = ttk.Frame(master, padding=(0,5))
+        self.buttom_frame = ttk.Frame(master, padding=5)
 
         self.main_frame = ttk.Frame(master, padding=5)
 
         self.start_frame()
 
         # Grid ustawienia
-        self.buttom_frame.grid(row=0, column=0, rowspan=5, sticky="nsew", pady=5)
+        self.buttom_frame.grid(row=0, column=0, rowspan=5, sticky="nsew", padx=5, pady=5)
 
         master.grid_rowconfigure(0, weight=2)
         master.grid_rowconfigure(1, weight=2)
@@ -67,6 +67,8 @@ class FolderApp:
             self.button_add_kupujacy(self.buttom_frame)
         elif frame == "sklepy":
             self.button_add_sklep(self.buttom_frame) 
+        elif frame == "artykuly":
+            pass                       
 
         self.button_back(self.buttom_frame)
         self.main_frame.grid(row=0, column=1, columnspan=3, rowspan=5, sticky="nsew", padx=5, pady=5, ipadx=5)
@@ -115,7 +117,34 @@ class FolderApp:
 
         return tree  
 
-    def create_name_tree(self, parent_frame, label_text):
+    def create_artykuly_tree(self, parent_frame, label_text):
+        label = ttk.Label(parent_frame, text=label_text, font=("Arial", 12))
+        tree = ttk.Treeview(parent_frame, columns=("id", 'Kategoria', 'Firma', 'artykul','Kolor','szczegoly'), show='headings')
+        label.pack(pady=5)
+
+        tree.column('id', width=50, anchor='e')
+        tree.heading('id', text='id_artykułu', anchor='e')
+
+        tree.column('Kategoria', width=100, anchor='w')
+        tree.heading('Kategoria', text='Kategoria', anchor='w')
+
+        tree.column('Firma', width=100, anchor='w')
+        tree.heading('Firma', text='Firma', anchor='w')
+
+        tree.column('artykul', width=100, anchor='e')
+        tree.heading('artykul', text='Artykuł', anchor='e')        
+
+        tree.column('Kolor', width=100, anchor='e')
+        tree.heading('Kolor', text='Kolor', anchor='e')
+
+        tree.column('szczegoly', width=100, anchor='e')
+        tree.heading('szczegoly', text='Szczegoly', anchor='e')
+       
+        tree.pack(expand=True, fill='both')
+
+        return tree       
+
+    def create_name_tree(self, parent_frame, label_text, status):
         label = ttk.Label(parent_frame, text=label_text, font=("Arial", 12))
         label.pack(pady=5)
 
@@ -125,7 +154,7 @@ class FolderApp:
 
         tree.column('name', width=200, anchor='w')
         tree.heading('name', text='Nazwa', anchor='w')
-        tree.pack(expand=True, fill='both')
+        tree.pack(expand=status, fill='both')
 
         return tree  
 
@@ -177,7 +206,7 @@ class FolderApp:
             zamow_cena_rabat = f"{zamow.oblicz_cene_rabat(self.db_session):,.2f} PLN".replace(",", " ")
             zamowienia_data.append((zamow_id, zamow_data, zamow_kupujacy, zamow_sklep, rabat_j, rabat_proc, zamow_cena, zamow_cena_rabat))
 
-        zamowienia_data.sort(key=lambda x:x[1])
+        zamowienia_data.sort(key=lambda x:x[1], reverse=True)
         self.zamowienia_tree.delete(*self.zamowienia_tree.get_children())
 
         for z_id, data, kupujacy, sklep, rabat_1, rabat_2, cena, cena_rabat in zamowienia_data:
@@ -212,6 +241,38 @@ class FolderApp:
         for kup_id, kup_nazwa in kupujacy_data:
             self.kupujacy_tree.insert('', 'end', values=(kup_id, kup_nazwa))
 
+    def load_kategorie(self):
+        kategorie = self.db_session.query(Kategoria).all()
+        kategorie_data = []
+
+        for kategoria in kategorie:
+            kategoria_id = kategoria.id
+            kategoria_name = kategoria.nazwa
+            kategorie_data.append((kategoria_id, kategoria_name))
+
+        self.kategorie_tree.delete(*self.kategorie_tree.get_children())
+
+        for kategoria_id, kategoria_name in kategorie_data:
+            self.kategorie_tree.insert('', 'end', values=(kategoria_id, kategoria_name))    
+
+    def load_artykuly(self):
+        artykuly = self.db_session.query(Artykul_Lista).all()
+        artykuly_data = []
+
+        for art in artykuly:
+            art_id = art.id
+            art_kategoria = art.kategoria.nazwa if art.kategoria else None
+            art_firma = art.firma.nazwa if art.firma else None
+            art_nazwa = art.artykul
+            art_kolor = art.kolor
+            art_szczegoly = art.szczegoly
+            artykuly_data.append((art_id, art_kategoria, art_firma, art_nazwa, art_kolor, art_szczegoly))
+
+        self.artykuly_tree.delete(*self.artykuly_tree.get_children())
+
+        for id, kategoria, firma, nazwa, kolor, szczegoly in artykuly_data:
+            self.artykuly_tree.insert('', 'end', values=(id, kategoria, firma, nazwa, kolor, szczegoly))
+
 
     def load_inside_zamowienie(self, id_zamowienia):
         self.inside_frame("zamowienia")
@@ -243,10 +304,22 @@ class FolderApp:
     def on_double_click(self, event):
         """Handle double-click event on a project folder."""
         selected_item = self.zamowienia_tree.selection()
+        self.zamowienie_id = selected_item
 
         if selected_item:
-            zamowienie_id = self.zamowienia_tree.item(selected_item[0], 'values')[0]
-            self.load_inside_zamowienie(zamowienie_id)
+            self.zamowienie_id = self.zamowienia_tree.item(selected_item[0], 'values')[0]
+            self.load_inside_zamowienie(self.zamowienie_id)
+
+    def on_double_click_inside(self, event):
+        """Handle double-click event on a project folder."""
+        selected_item = self.artykuly_tree.selection()
+
+        if selected_item:
+            artykul_id = self.artykuly_tree.item(selected_item[0], 'values')[0]
+            self.add_artykul_do_zamowienie(self.zamowienie_id, artykul_id)
+            self.load_inside_zamowienie(self.zamowienie_id)
+
+
 
     def add_zamowienie_window(self):
         self.window = tk.Toplevel(self.master)
@@ -259,8 +332,8 @@ class FolderApp:
         self.kupujacy_frame = ttk.Frame(self.window, padding=5)
         self.sklepy_frame = ttk.Frame(self.window, padding=5)
 
-        self.kupujacy_tree = self.create_name_tree(self.kupujacy_frame, "Kupujący")
-        self.sklepy_tree = self.create_name_tree(self.sklepy_frame, "Sklepy")
+        self.kupujacy_tree = self.create_name_tree(self.kupujacy_frame, "Kupujący", True)
+        self.sklepy_tree = self.create_name_tree(self.sklepy_frame, "Sklepy", True)
 
         self.buttons_add_zamowienia()
         self.load_kupujacy()
@@ -281,6 +354,30 @@ class FolderApp:
     def add_zamowienie(self):
         self.add_zamowienie_window()
 
+
+    def add_artykul(self):
+        artykul = simpledialog.askstring("Dodaj Kupującego", "Podaj nazwę KUPUJACEGO: \t\t\t")
+
+        if artykul is not None:
+            art_1 = Artykul_Lista(artykul=artykul, kategoria=kategoria_1, firma=firma_1)
+            selected_kategoria = self.folder_tree.selection()[0]
+            selected_firma = self.folder_tree.selection()[0]
+
+
+            kupujacy = Kupujacy(nazwa=kupujacy_name)
+            self.db_session.add(kupujacy)
+            self.db_session.commit()
+            
+        self.load_kupujacy()    
+
+    def add_artykul_do_zamowienie(self, zamowienie, id_art):
+        self.db_session.execute(artykuly_relacja.insert().values(
+            zamowienie_id = zamowienie,
+            artykul_id = id_art,
+            cena_jednostkowa=21
+
+        ))
+        self.db_session.commit()
 
     def add_kupujacy(self):
         kupujacy_name = simpledialog.askstring("Dodaj Kupującego", "Podaj nazwę KUPUJACEGO: \t\t\t")
@@ -317,13 +414,25 @@ class FolderApp:
 
     def list_sklepy(self):
         self.inside_frame("sklepy")
-        self.sklepy_tree = self.create_name_tree(self.main_frame, "Sklepy")
+        self.sklepy_tree = self.create_name_tree(self.main_frame, "Sklepy", True)
         self.load_sklepy()
 
     def list_kupujacy(self):
         self.inside_frame("kupujacy")
-        self.kupujacy_tree = self.create_name_tree(self.main_frame, "Kupujacy")
+        self.kupujacy_tree = self.create_name_tree(self.main_frame, "Kupujacy", True)
         self.load_kupujacy()
+
+    def add_list_artykulow(self):
+        self.list_artykulow()
+        self.artykuly_tree.bind("<Double-1>", self.on_double_click_inside)
+
+    def list_artykulow(self):
+        self.inside_frame("artykuly")
+        self.kategorie_tree = self.create_name_tree(self.main_frame, "Kategorie Lista", False)
+        self.artykuly_tree = self.create_artykuly_tree(self.main_frame, "Artykuły Lista")
+        self.load_kategorie()
+        self.load_artykuly()
+
 
     def buttons_main(self):
         #tworzenie przycisków w głównym menu
@@ -338,20 +447,20 @@ class FolderApp:
         self.add_button = ttk.Button(self.buttom_frame, text="Usuń\nzamowienie", command=self.delete_zamowienie, width = 10, image=self.delete_zamowienie_icon, compound="left")
         self.add_button.pack(side='top', padx=1, pady=3)
 
-        self.add_button = ttk.Button(self.buttom_frame, text="Lista\nartykułów", command=self.refresh, width = 10, image=self.delete_zamowienie_icon, compound="left")
+        self.add_button = ttk.Button(self.buttom_frame, text="Lista\nartykułów", command=self.list_artykulow, width = 10, image=self.delete_zamowienie_icon, compound="left")
         self.add_button.pack(side='top', padx=1, pady=(30,3))
         self.add_button = ttk.Button(self.buttom_frame, text="Lista\nsklepów", command=self.list_sklepy, width = 10, image=self.delete_zamowienie_icon, compound="left")
         self.add_button.pack(side='top', padx=1, pady=3)
         self.add_button = ttk.Button(self.buttom_frame, text="Lista\nkupujacych", command=self.list_kupujacy, width = 10, image=self.delete_zamowienie_icon, compound="left")
         self.add_button.pack(side='top', padx=1, pady=3)
 
-        self.button_refresh(self.buttom_frame)
+        self.button_refresh_zamowienia(self.buttom_frame)
 
     def buttons_inside(self):
         self.add_art_icon = PhotoImage(file=os.path.join(self.dsc, "image", "edit_project_icon.png")).subsample(20, 20)
         self.delete_zamowienie_icon = PhotoImage(file=os.path.join(self.dsc, "image", "delete_project_icon.png")).subsample(20, 20)
         
-        self.add_button = ttk.Button(self.buttom_frame, text="Dodaj\nartykuł do \nzamowienia", command=self.refresh, width = 10, image=self.add_art_icon, compound="left")
+        self.add_button = ttk.Button(self.buttom_frame, text="Dodaj\nartykuł do \nzamowienia", command=self.add_list_artykulow, width = 10, image=self.add_art_icon, compound="left")
         self.add_button.pack(side='top', padx=1, pady=3)
         self.add_button = ttk.Button(self.buttom_frame, text="Usuń\nartykuł", command=self.refresh, width = 10, image=self.delete_zamowienie_icon, compound="left")
         self.add_button.pack(side='top', padx=1, pady=3)
@@ -363,7 +472,7 @@ class FolderApp:
 
         self.button_add_kupujacy(self.buttom_frame_add_zamowienia)
         self.button_add_sklep(self.buttom_frame_add_zamowienia)
-        self.button_refresh(self.buttom_frame_add_zamowienia)
+        # self.button_refresh() # do dodania
 
     def button_add_artykul(self, frame):
         self.add_art_icon = PhotoImage(file=os.path.join(self.dsc, "image", "edit_project_icon.png")).subsample(20, 20)
@@ -386,7 +495,7 @@ class FolderApp:
         self.add_button.pack(side='top', padx=1, pady=3)
         
 
-    def button_refresh(self, frame):
+    def button_refresh_zamowienia(self, frame):
         self.refresh_element_icon = PhotoImage(file=os.path.join(self.dsc, "image", "delete_project_icon.png")).subsample(20, 20)
         self.add_button = ttk.Button(frame, text="Odśwież", command=self.load_zamowienia, width = 10, image=self.refresh_element_icon, compound="left")
         self.add_button.pack(side='bottom', padx=1, pady=3)

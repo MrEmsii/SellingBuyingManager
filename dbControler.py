@@ -73,7 +73,7 @@ class Zamowienie(Base):
     def get_ilosc_artykul(self, artykul, session):
         # Pobiera ilość danego elementu w projekcie
         wynik = self._get_zamowienie_artykul_miejsce(artykul, session)
-        return wynik[3] if wynik else 1
+        return wynik[3] if wynik is not None else 1
 
     def _get_zamowienie_artykul_miejsce(self, artykul, session):
         stmt = select(artykuly_relacja).where(artykuly_relacja.c.zamowienie_id == self.id, artykuly_relacja.c.artykul_id == artykul.id) # Tworzenie zapytania select

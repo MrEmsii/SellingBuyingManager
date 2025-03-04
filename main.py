@@ -279,27 +279,42 @@ class FolderApp:
         self.inside_tree = self.create_inside_tree(self.main_frame, 'Zamowienia') 
         self.inside_tree.delete(*self.inside_tree.get_children())
 
-        inside = self.db_session.query(Zamowienie).filter_by(id=id_zamowienia).first()
+        wynik_all = self.db_session.execute(
+            select(
+                artykuly_relacja.c.artykul_id,
+                artykuly_relacja.c.cena_jednostkowa,
+                artykuly_relacja.c.ilosc_artykulu
+            ).where(artykuly_relacja.c.zamowienie_id == id_zamowienia)
+        ).fetchall()
 
-        for zamowienie in inside.artykuly:
-            id_art = zamowienie.id
-            ilosc = inside.get_ilosc_artykul(zamowienie, self.db_session)
-            kategoria = zamowienie.kategoria.nazwa if zamowienie.kategoria else None
-            firma = zamowienie.firma.nazwa if zamowienie.firma else None
-            nazwa = zamowienie.artykul
-            kolor = zamowienie.kolor
-            szczegoly = zamowienie.szczegoly
+        existing_iids = set(self.inside_tree.get_children())
 
-            wynik = self.db_session.execute(
-                select(artykuly_relacja.c.cena_jednostkowa)
-                .where(
-                    artykuly_relacja.c.zamowienie_id == id_zamowienia,
-                    artykuly_relacja.c.artykul_id == id_art
-                )
-            ).fetchone()
-            cena = f"{wynik[0] if wynik else 0:.2f} PLN" # Jeśli brak wyniku, domyślnie 0 
-            
-            self.inside_tree.insert('', 'end', values=(id_art, cena, ilosc, kategoria, firma, nazwa, kolor, szczegoly))
+        artykul_data = []
+
+        for wynik in wynik_all:
+            id_art = wynik.artykul_id
+            cena = f"{wynik.cena_jednostkowa if wynik.cena_jednostkowa else 0:.2f} PLN"
+            ilosc = wynik.ilosc_artykulu if wynik.ilosc_artykulu else 1
+
+            artykul = self.db_session.query(Artykul_Lista).filter_by(id=id_art).first()
+            kategoria = artykul.kategoria.nazwa if artykul.kategoria else None
+            firma = artykul.firma.nazwa if artykul.firma else None
+            nazwa = artykul.artykul
+            kolor = artykul.kolor
+            szczegoly = artykul.szczegoly
+
+            unique_id = f"{id_art}-{ilosc}"
+            counter = 1
+            while unique_id in existing_iids:
+                unique_id = f"{id_art}-{ilosc}-{counter}"
+                counter += 1
+
+            existing_iids.add(unique_id)
+            artykul_data.append((unique_id, id_art, cena, ilosc, kategoria, firma, nazwa, kolor, szczegoly))
+
+        artykul_data.sort(key=lambda x: x[6].lower())
+        for row in artykul_data:
+            self.inside_tree.insert('', 'end', iid=row[0], values=row[1:])
 
     def on_double_click(self, event):
         """Handle double-click event on a project folder."""

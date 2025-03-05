@@ -394,6 +394,20 @@ class FolderApp:
         ))
         self.db_session.commit()
 
+    def del_artykul_do_zamowienie(self):
+        relacja_name = self.inside_tree.item(self.inside_tree.selection()[0], 'values')
+        dialog = simpledialog.askstring("Usuń folder", "Czy jesteś pewien usunięcia projektu:\n\nCzynność NIE odwracalna\n\nNapisz YES lub TAK \t\t\t")
+        if dialog == "YES" or dialog == "TAK":
+            self.db_session.execute(
+                artykuly_relacja.delete()
+                .where(artykuly_relacja.c.zamowienie_id == self.zamowienie_id,
+                artykuly_relacja.c.artykul_id == relacja_name[0],
+                artykuly_relacja.c.ilosc_artykulu == relacja_name[2]
+                )
+            )
+            self.db_session.commit()
+            self.load_inside_zamowienie(self.zamowienie_id)
+
     def add_kupujacy(self):
         kupujacy_name = simpledialog.askstring("Dodaj Kupującego", "Podaj nazwę KUPUJACEGO: \t\t\t")
         if kupujacy_name is not None:
@@ -477,7 +491,7 @@ class FolderApp:
         
         self.add_button = ttk.Button(self.buttom_frame, text="Dodaj\nartykuł do \nzamowienia", command=self.add_list_artykulow, width = 10, image=self.add_art_icon, compound="left")
         self.add_button.pack(side='top', padx=1, pady=3)
-        self.add_button = ttk.Button(self.buttom_frame, text="Usuń\nartykuł", command=self.refresh, width = 10, image=self.delete_zamowienie_icon, compound="left")
+        self.add_button = ttk.Button(self.buttom_frame, text="Usuń\nartykuł", command=self.del_artykul_do_zamowienie, width = 10, image=self.delete_zamowienie_icon, compound="left")
         self.add_button.pack(side='top', padx=1, pady=3)
 
     def buttons_add_zamowienia(self):

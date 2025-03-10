@@ -31,6 +31,7 @@ class FolderApp:
 
         self.main_frame = ttk.Frame(master, padding=5)
 
+        self.button_icon_pack()
         self.start_frame()
 
         # Grid ustawienia
@@ -50,29 +51,33 @@ class FolderApp:
         self.secend_frame = ttk.Frame(self.master, padding=5)
         self.third_frame = ttk.Frame(self.master, padding=5)
         self.zamowienia_tree = self.create_zamowienie_tree(self.main_frame, 'Zamowienia') 
-        self.buttons_main()
+        self.buttons_main_pack()
         self.load_zamowienia()
         
         self.zamowienia_tree.bind("<Double-1>", self.on_double_click)
         self.main_frame.grid(row=0, column=1, columnspan=3, rowspan=5, sticky="nsew", padx=5, pady=5, ipadx=5)
 
-    def inside_frame(self, frame):
+    def inside_frame(self, frame, commend = 'main'):
         for widget in self.main_frame.winfo_children():
             widget.destroy()
 
         for widget in self.buttom_frame.winfo_children():
             widget.destroy()
-            
+        
         if frame == "zamowienia":
-            self.buttons_inside()
+            self.buttons_zamowienie_pack()
         elif frame == "kupujacy":
             self.button_add_kupujacy(self.buttom_frame)
         elif frame == "sklepy":
             self.button_add_sklep(self.buttom_frame) 
         elif frame == "artykuly":
             self.button_create_artykul(self.buttom_frame) 
-                                   
-        self.button_back(self.buttom_frame)
+        elif frame == 'tworzenie_artykuly':
+            self.button_add_kategoria(self.buttom_frame) 
+            self.button_add_firma(self.buttom_frame)
+            commend = 'lista_artykułów' 
+
+        self.button_back(self.buttom_frame, commend)
         self.main_frame.grid(row=0, column=1, columnspan=3, rowspan=5, sticky="nsew", padx=5, pady=5, ipadx=5)
 
 
@@ -141,7 +146,7 @@ class FolderApp:
         label = ttk.Label(parent_frame, text=label_text, font=("Arial", 12))
         label.pack(pady=5)
 
-        tree = ttk.Treeview(parent_frame, columns=('id', 'name'), show='headings')
+        tree = ttk.Treeview(parent_frame, columns=('id', 'name'), show='headings', height=20)
         tree.column('id', width=30, anchor='e')
         tree.heading('id', text='ID', anchor='e')
 
@@ -216,9 +221,12 @@ class FolderApp:
             sklepy_data.append((sklep_id, sklep_nazwa))
 
         self.sklepy_tree.delete(*self.sklepy_tree.get_children())
+        sklepy_data.sort(key=lambda x:x[1])
+
 
         for sklep_id, sklep_nazwa in sklepy_data:
             self.sklepy_tree.insert('', 'end', values=(sklep_id, sklep_nazwa))
+     
 
     def load_kupujacy(self):
         kupujacy = self.db_session.query(Kupujacy).all()
@@ -230,6 +238,8 @@ class FolderApp:
             kupujacy_data.append((kup_id, kup_nazwa))
 
         self.kupujacy_tree.delete(*self.kupujacy_tree.get_children())
+        kupujacy_data.sort(key=lambda x:x[1])
+
 
         for kup_id, kup_nazwa in kupujacy_data:
             self.kupujacy_tree.insert('', 'end', values=(kup_id, kup_nazwa))
@@ -244,10 +254,26 @@ class FolderApp:
             kategorie_data.append((kategoria_id, kategoria_name))
 
         self.kategorie_tree.delete(*self.kategorie_tree.get_children())
+        kategorie_data.sort(key=lambda x:x[1])
+
 
         for kategoria_id, kategoria_name in kategorie_data:
             self.kategorie_tree.insert('', 'end', values=(kategoria_id, kategoria_name))    
 
+    def load_firmy(self):
+        firmy = self.db_session.query(Firma).all()
+        firmy_data = []
+
+        for firma in firmy:
+            firma_id = firma.id
+            firma_name = firma.nazwa
+            firmy_data.append((firma_id, firma_name))
+
+        self.firmy_tree.delete(*self.firmy_tree.get_children())
+
+        for firma_id, firma_name in firmy_data:
+            self.firmy_tree.insert('', 'end', values=(firma_id, firma_name))  
+            
     def load_artykuly(self):
         artykuly = self.db_session.query(Artykul_Lista).all()
         artykuly_data = []
@@ -327,8 +353,6 @@ class FolderApp:
             self.add_artykul_do_zamowienie(self.zamowienie_id, artykul_id)
             self.load_inside_zamowienie(self.zamowienie_id)
 
-
-
     def add_zamowienie_window(self):
         self.window = tk.Toplevel(self.master)
         self.window.geometry("900x700+0+0")
@@ -395,27 +419,18 @@ class FolderApp:
         self.secend_frame = ttk.Frame(self.master, padding=5)
         self.third_frame = ttk.Frame(self.master, padding=5)
 
-        self.inside_frame("artykuly")
+        self.inside_frame("tworzenie_artykuly")
         self.main_frame.grid(row=0, column=1, columnspan=2, rowspan=2, sticky="nsew", padx=5, pady=5, ipadx=5)
         self.secend_frame.grid(row=2, column=1, columnspan=2, rowspan=2, sticky="nsew", padx=5, pady=5, ipadx=5)
-        self.third_frame.grid(row=0, column=2, columnspan=1, rowspan=2, sticky="nsew", padx=5, pady=5, ipadx=5)
+        self.third_frame.grid(row=0, column=3, columnspan=1, rowspan=2, sticky="nsew", padx=5, pady=5, ipadx=5)
         
-        self.kategorie_tree = self.create_name_tree(self.main_frame, "Kategorie Lista", True)
+        self.firmy_tree = self.create_name_tree(self.main_frame, "Lista Firm", True)
         self.kategorie_tree = self.create_name_tree(self.secend_frame, "Kategorie Lista", True)
+        self.artykuly_tree = self.create_name_tree(self.third_frame, "Kategorie Lista", True)
+        
         self.load_kategorie()
+        self.load_firmy()
 
-        # artykul = simpledialog.askstring("Dodaj Kupującego", "Podaj nazwę KUPUJACEGO: \t\t\t")
-
-        # if artykul is not None:
-        #     selected_kategoria = self.folder_tree.selection()[0]
-        #     selected_firma = self.folder_tree.selection()[0]
-
-        #     kupujacy = Kupujacy(nazwa=kupujacy_name)
-        #     art_1 = Artykul_Lista(artykul=artykul, kategoria=kategoria_1, firma=firma_1)
-        #     self.db_session.add(kupujacy)
-        #     self.db_session.commit()
-            
-        # self.load_kupujacy()    
 
     def add_artykul_do_zamowienie(self, zamowienie, id_art):
         self.db_session.execute(artykuly_relacja.insert().values(
@@ -442,6 +457,22 @@ class FolderApp:
             self.db_session.commit()
         self.load_sklepy()    
 
+    def add_firma(self):
+        firma_name = simpledialog.askstring("Dodaj firme", "Podaj nazwę FIRMY: \t\t\t")
+        if firma_name is not None:
+            firma = Firma(nazwa=firma_name)
+            self.db_session.add(firma)
+            self.db_session.commit()
+        self.load_firmy()    
+
+    def add_kategoria(self):
+        kategoria_name = simpledialog.askstring("Dodaj kategorie", "Podaj nazwę KATEGORII: \t\t\t")
+        if kategoria_name is not None:
+            kategoria = Kategoria(nazwa=kategoria_name)
+            self.db_session.add(kategoria)
+            self.db_session.commit()
+        self.load_kategorie()    
+
     def add_list_artykulow(self):
         self.list_artykulow()
         self.artykuly_tree.bind("<Double-1>", self.on_double_click_inside)
@@ -449,6 +480,11 @@ class FolderApp:
     def list_kupujacy(self):
         self.inside_frame("kupujacy")
         self.kupujacy_tree = self.create_name_tree(self.main_frame, "Kupujacy", True)
+        self.load_kupujacy()
+
+    def list_firmy(self):
+        self.inside_frame("firmy")
+        self.firmy_tree = self.create_name_tree(self.main_frame, "Kupujacy", True)
         self.load_kupujacy()
 
     def list_sklepy(self):
@@ -485,46 +521,77 @@ class FolderApp:
             widget.destroy()
 
 
-    def backButton(self):
+    def button_back_to_main(self):
         self.delete_all()
 
         self.start_frame()
         self.load_zamowienia()
 
+    def button_back_to_lista_artkulow(self):
+        self.delete_all()
 
-    def buttons_main(self):
-        #tworzenie przycisków w głównym menu
+        self.start_frame()
+        self.list_artykulow()
+
+
+    def button_icon_pack(self):
         self.add_zamowienie_icon = PhotoImage(file=os.path.join(self.dsc, "image", "add_project_icon.png")).subsample(20, 20)
         self.edit_zamowienie_icon = PhotoImage(file=os.path.join(self.dsc, "image", "edit_project_icon.png")).subsample(20, 20)
+        self.add_art_icon = PhotoImage(file=os.path.join(self.dsc, "image", "edit_project_icon.png")).subsample(20, 20)
         self.delete_zamowienie_icon = PhotoImage(file=os.path.join(self.dsc, "image", "delete_project_icon.png")).subsample(20, 20)
-        
-        self.add_button = ttk.Button(self.buttom_frame, text="Dodaj\nzamowienie", command=self.add_zamowienie, width = 10, image=self.add_zamowienie_icon, compound="left",)
-        self.add_button.pack(side='top', padx=1, pady=3)
-        self.add_button = ttk.Button(self.buttom_frame, text="Edytuj\nzamowienie", command=self.mod_zamowienie, width = 10, image=self.edit_zamowienie_icon, compound="left")
-        self.add_button.pack(side='top', padx=1, pady=3)
-        self.add_button = ttk.Button(self.buttom_frame, text="Usuń\nzamowienie", command=self.delete_zamowienie, width = 10, image=self.delete_zamowienie_icon, compound="left")
-        self.add_button.pack(side='top', padx=1, pady=3)
+        self.add_zamowienie_inside_icon = PhotoImage(file=os.path.join(self.dsc, "image", "edit_project_icon.png")).subsample(20, 20)
+        self.backButton_icon = PhotoImage(file=os.path.join(self.dsc, "image", "delete_project_icon.png")).subsample(20, 20)
+        self.dodaj_kupujacego_inside_icon = PhotoImage(file=os.path.join(self.dsc, "image", "delete_project_icon.png")).subsample(20, 20)
+        self.dodaj_sklep_inside_icon = PhotoImage(file=os.path.join(self.dsc, "image", "delete_project_icon.png")).subsample(20, 20)
+        self.refresh_element_icon = PhotoImage(file=os.path.join(self.dsc, "image", "delete_project_icon.png")).subsample(20, 20)
 
-        self.add_button = ttk.Button(self.buttom_frame, text="Lista\nartykułów", command=self.list_artykulow, width = 10, image=self.delete_zamowienie_icon, compound="left")
-        self.add_button.pack(side='top', padx=1, pady=(30,3))
-        self.add_button = ttk.Button(self.buttom_frame, text="Lista\nsklepów", command=self.list_sklepy, width = 10, image=self.delete_zamowienie_icon, compound="left")
-        self.add_button.pack(side='top', padx=1, pady=3)
-        self.add_button = ttk.Button(self.buttom_frame, text="Lista\nkupujacych", command=self.list_kupujacy, width = 10, image=self.delete_zamowienie_icon, compound="left")
-        self.add_button.pack(side='top', padx=1, pady=3)
+    def buttons_zamowienie_pack(self):
+        self.button_dodaj_artykul_zamowienie()
+        self.button_usun_artykul_zamowienie()
+
+    def buttons_main_pack(self):
+        self.button_dodaj_zamowienie(self.buttom_frame)
+        self.button_modyfikuj_zamowienie(self.buttom_frame)
+        self.button_usun_zamowienie(self.buttom_frame)
+        self.button_lista_artykulow(self.buttom_frame)
+        self.button_lista_sklepow(self.buttom_frame)
+        self.button_lista_kupujacych(self.buttom_frame)
 
         self.button_refresh_zamowienia(self.buttom_frame)
 
-    def buttons_inside(self):
-        self.add_art_icon = PhotoImage(file=os.path.join(self.dsc, "image", "edit_project_icon.png")).subsample(20, 20)
-        self.delete_zamowienie_icon = PhotoImage(file=os.path.join(self.dsc, "image", "delete_project_icon.png")).subsample(20, 20)
+    def button_dodaj_zamowienie(self, frame):
+        self.add_button = ttk.Button(frame, text="Dodaj\nzamowienie", command=self.add_zamowienie, width = 10, image=self.add_zamowienie_icon, compound="left",)
+        self.add_button.pack(side='top', padx=1, pady=3)
+
+    def button_modyfikuj_zamowienie(self, frame):
+        self.add_button = ttk.Button(frame, text="Edytuj\nzamowienie", command=self.mod_zamowienie, width = 10, image=self.edit_zamowienie_icon, compound="left")
+        self.add_button.pack(side='top', padx=1, pady=3)
+
+    def button_usun_zamowienie(self, frame):
+        self.add_button = ttk.Button(frame, text="Usuń\nzamowienie", command=self.delete_zamowienie, width = 10, image=self.delete_zamowienie_icon, compound="left")
+        self.add_button.pack(side='top', padx=1, pady=3)
+
+    def button_lista_artykulow(self, frame):
+        self.add_button = ttk.Button(frame, text="Lista\nartykułów", command=self.list_artykulow, width = 10, image=self.delete_zamowienie_icon, compound="left")
+        self.add_button.pack(side='top', padx=1, pady=(30,3))
+
+    def button_lista_sklepow(self, frame):
+        self.add_button = ttk.Button(frame, text="Lista\nsklepów", command=self.list_sklepy, width = 10, image=self.delete_zamowienie_icon, compound="left")
+        self.add_button.pack(side='top', padx=1, pady=3)
+
+    def button_lista_kupujacych(self, frame):
+        self.add_button = ttk.Button(frame, text="Lista\nkupujacych", command=self.list_kupujacy, width = 10, image=self.delete_zamowienie_icon, compound="left")
+        self.add_button.pack(side='top', padx=1, pady=3)
         
+    def button_dodaj_artykul_zamowienie(self, frame):
         self.add_button = ttk.Button(self.buttom_frame, text="Dodaj\nartykuł do \nzamowienia", command=self.add_list_artykulow, width = 10, image=self.add_art_icon, compound="left")
         self.add_button.pack(side='top', padx=1, pady=3)
+
+    def button_usun_artykul_zamowienie(self, frame):
         self.add_button = ttk.Button(self.buttom_frame, text="Usuń\nartykuł", command=self.del_artykul_do_zamowienie, width = 10, image=self.delete_zamowienie_icon, compound="left")
         self.add_button.pack(side='top', padx=1, pady=3)
 
     def buttons_add_zamowienia(self):
-        self.add_zamowienie_inside_icon = PhotoImage(file=os.path.join(self.dsc, "image", "edit_project_icon.png")).subsample(20, 20)
         self.add_button = ttk.Button(self.buttom_frame_add_zamowienia, text="Zatwierdź", command=self.refresh, width = 10, image=self.add_zamowienie_inside_icon, compound="left")
         self.add_button.pack(side='top', padx=1, pady=3)
 
@@ -532,29 +599,36 @@ class FolderApp:
         self.button_add_sklep(self.buttom_frame_add_zamowienia)
 
     def button_create_artykul(self, frame):
-        self.add_art_icon = PhotoImage(file=os.path.join(self.dsc, "image", "edit_project_icon.png")).subsample(20, 20)
         self.add_button = ttk.Button(frame, text="Stwórz\nartykuł", command=self.create_artykul, width = 10, image=self.add_art_icon, compound="left")
         self.add_button.pack(side='top', padx=1, pady=3)       
 
-    def button_back(self, frame):
-        self.backButton_icon = PhotoImage(file=os.path.join(self.dsc, "image", "delete_project_icon.png")).subsample(20, 20)
-        self.add_button = ttk.Button(frame, text="Wróć", command=self.backButton, width = 10, image=self.backButton_icon, compound="left")
+    def button_back(self, frame, commend = "main"):
+        if commend == "main":
+            commend = self.button_back_to_main
+        elif commend == "lista_artykułów":
+            commend = self.button_back_to_lista_artkulow
+        self.add_button = ttk.Button(frame, text="Wróć", command=commend, width = 10, image=self.backButton_icon, compound="left")
         self.add_button.pack(side='bottom', padx=1, pady=3) 
 
     def button_add_kupujacy(self, frame):
-        self.dodaj_kupujacego_inside_icon = PhotoImage(file=os.path.join(self.dsc, "image", "delete_project_icon.png")).subsample(20, 20)
         self.add_button = ttk.Button(frame, text="Dodaj\nkupującego", command=self.add_kupujacy, width = 10, image=self.dodaj_kupujacego_inside_icon, compound="left")
         self.add_button.pack(side='top', padx=1, pady=3)        
 
     def button_add_sklep(self, frame):
-        self.dodaj_sklep_inside_icon = PhotoImage(file=os.path.join(self.dsc, "image", "delete_project_icon.png")).subsample(20, 20)
         self.add_button = ttk.Button(frame, text="Dodaj\nsklep", command=self.add_sklep, width = 10, image=self.dodaj_sklep_inside_icon, compound="left")
         self.add_button.pack(side='top', padx=1, pady=3)
 
     def button_refresh_zamowienia(self, frame):
-        self.refresh_element_icon = PhotoImage(file=os.path.join(self.dsc, "image", "delete_project_icon.png")).subsample(20, 20)
         self.add_button = ttk.Button(frame, text="Odśwież", command=self.load_zamowienia, width = 10, image=self.refresh_element_icon, compound="left")
         self.add_button.pack(side='bottom', padx=1, pady=3)
+
+    def button_add_firma(self, frame):
+        self.add_button = ttk.Button(frame, text="Dodaj\nfirma", command=self.add_firma, width = 10, image=self.add_zamowienie_icon, compound="left")
+        self.add_button.pack(side='top', padx=1, pady=3)
+
+    def button_add_kategoria(self, frame):
+        self.add_button = ttk.Button(frame, text="Dodaj\nkategoria", command=self.add_kategoria, width = 10, image=self.add_zamowienie_icon, compound="left")
+        self.add_button.pack(side='top', padx=1, pady=3)
 
 if __name__ == "__main__":
     root = TkinterDnD.Tk()  # Use TkinterDnD for DnD

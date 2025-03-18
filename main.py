@@ -4,6 +4,7 @@ from tkinter import ttk, messagebox, simpledialog, PhotoImage, Listbox
 from tkinterdnd2 import DND_FILES, TkinterDnD
 from dbControler import SQLconnect, select, Kupujacy, Kategoria, Sklep, Firma, Zamowienie, Artykul_Lista, artykuly_relacja
 from tkcalendar import DateEntry
+import datetime as datetime
 
 
 class FolderApp:
@@ -75,7 +76,7 @@ class FolderApp:
         elif frame == "artykuly":
             self.button_create_artykul(self.buttom_frame) 
         elif frame == "add_zamowienie":
-            self.buttons_add_zamowienia(self.buttom_frame) 
+            self.buttons_zatwierdz_zamowienia(self.buttom_frame) 
         elif frame == 'tworzenie_artykuly':
             self.button_add_kategoria(self.buttom_frame) 
             self.button_add_firma(self.buttom_frame)
@@ -208,6 +209,7 @@ class FolderApp:
             zamow_cena_rabat = f"{zamow.oblicz_cene_rabat(self.db_session):,.2f} PLN".replace(",", " ")
             zamowienia_data.append((zamow_id, zamow_data, zamow_kupujacy, zamow_sklep, rabat_j, rabat_proc, zamow_cena, zamow_cena_rabat))
 
+        zamowienia_data.sort(key=lambda x:x[0], reverse=True)
         zamowienia_data.sort(key=lambda x:x[1], reverse=True)
         self.zamowienia_tree.delete(*self.zamowienia_tree.get_children())
 
@@ -374,13 +376,13 @@ class FolderApp:
         self.load_kupujacy()
         self.load_sklepy()
 
-        date_label = ttk.Label(self.third_frame, text = 'Data', font=('calibre', 10, 'bold'))
+        date_label = ttk.Label(self.third_frame, text = 'Data:', font=('calibre', 10, 'bold'), anchor='w')
        
-        rabat_j_label = ttk.Label(self.third_frame, text = 'Rabat jednostkowy', font=('calibre', 10, 'bold'))
-        rabat_p_label = ttk.Label(self.third_frame, text = 'Rabat procentowy', font=('calibre',10, 'bold'))
+        rabat_j_label = ttk.Label(self.third_frame, text = 'Rabat jednostkowy:', font=('calibre', 10, 'bold'), anchor='w')
+        rabat_p_label = ttk.Label(self.third_frame, text = 'Rabat procentowy:', font=('calibre',10, 'bold'), anchor='w')
 
-        self.rabat_j_var = tk.StringVar()
-        self.rabat_p_var = tk.StringVar()
+        self.rabat_j_var = tk.DoubleVar()
+        self.rabat_p_var = tk.DoubleVar()
 
         rabat_j_entry = ttk.Entry(self.third_frame, textvariable = self.rabat_j_var, font=('calibre',10,'normal'), width=10)
         rabat_p_entry = ttk.Entry(self.third_frame, textvariable = self.rabat_p_var, font=('calibre',10,'normal'), width=10)
@@ -407,6 +409,11 @@ class FolderApp:
         rabat_p_label.grid(row=3,column=0)
         rabat_p_entry.grid(row=3,column=1)
 
+    def konwersja_string_dp_data(self, date):
+        format = "%Y-%m-%d"
+        date = datetime.datetime.strptime(date, format).date()
+        return date
+
     def zatwierdz_zamowienie(self):
         selected_item = self.kupujacy_tree.selection()
         if not selected_item:
@@ -416,11 +423,14 @@ class FolderApp:
         if not selected_item:
             return
         
-        kupujacy_id = self.kupujacy_tree.item(self.kupujacy_tree.selection()[0], 'values')[0]
-        sklep_id = self.sklepy_tree.item(self.sklepy_tree.selection()[0], 'values')[0]
-        print(kupujacy_id, sklep_id, self.date.get(), self.rabat_j_var.get(), self.rabat_p_var.get())
+        kupujacy_id = int(self.kupujacy_tree.item(self.kupujacy_tree.selection()[0], 'values')[0])
+        sklep_id = int(self.sklepy_tree.item(self.sklepy_tree.selection()[0], 'values')[0])
+       
+        zamowienie = Zamowienie(data=self.konwersja_string_dp_data(self.date.get()), kupujacy_id=kupujacy_id, sklep_id=sklep_id, rabat_j=self.rabat_j_var.get(), rabat_procent=self.rabat_p_var.get())
+        
+        self.db_session.add_all([zamowienie])
+        self.db_session.commit()
 
-        # if kupujacy_id is not None and sklep_id is not None:
 
 
     def mod_zamowienie(self):
@@ -650,7 +660,7 @@ class FolderApp:
         self.add_button = ttk.Button(frame, text="Dodaj\nartykuł do \nzamowienia", command=self.add_list_artykulow, width = 10, image=self.add_art_icon, compound="left")
         self.add_button.pack(side='top', padx=1, pady=3)
 
-    def buttons_add_zamowienia(self, frame):
+    def buttons_zatwierdz_zamowienia(self, frame):
         self.add_button = ttk.Button(frame, text="Zatwierdź\nzamówienie", command=self.zatwierdz_zamowienie, width = 10, image=self.add_zamowienie_inside_icon, compound="left")
         self.add_button.pack(side='top', padx=1, pady=3)
 

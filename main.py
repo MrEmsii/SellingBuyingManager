@@ -409,7 +409,7 @@ class FolderApp:
         rabat_p_label.grid(row=3,column=0)
         rabat_p_entry.grid(row=3,column=1)
 
-    def konwersja_string_dp_data(self, date):
+    def konwersja_string_do_data(self, date):
         format = "%Y-%m-%d"
         date = datetime.datetime.strptime(date, format).date()
         return date
@@ -425,10 +425,23 @@ class FolderApp:
         
         kupujacy_id = int(self.kupujacy_tree.item(self.kupujacy_tree.selection()[0], 'values')[0])
         sklep_id = int(self.sklepy_tree.item(self.sklepy_tree.selection()[0], 'values')[0])
-       
-        zamowienie = Zamowienie(data=self.konwersja_string_dp_data(self.date.get()), kupujacy_id=kupujacy_id, sklep_id=sklep_id, rabat_j=self.rabat_j_var.get(), rabat_procent=self.rabat_p_var.get())
+        data = self.konwersja_string_do_data(self.date.get())
         
-        self.db_session.add_all([zamowienie])
+        try:
+            rabat_j = self.rabat_j_var.get()
+        except tk.TclError:
+            messagebox.showerror("Błąd", "Nieprawidłowa wartość rabatu! Wpisz liczbę.")
+            return
+
+        try:
+            rabat_procentowy = self.rabat_p_var.get()
+        except tk.TclError:
+            messagebox.showerror("Błąd", "Nieprawidłowa wartość rabatu! Wpisz liczbę.")
+            return
+
+        zamowienie = Zamowienie(data=data, kupujacy_id=kupujacy_id, sklep_id=sklep_id, rabat_j=rabat_j, rabat_procent=rabat_procentowy)
+        
+        self.db_session.add(zamowienie)
         self.db_session.commit()
 
 

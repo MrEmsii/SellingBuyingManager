@@ -53,14 +53,14 @@ class FolderApp:
     def start_frame(self):
         self.secend_frame = ttk.Frame(self.master, padding=5)
         self.third_frame = ttk.Frame(self.master, padding=5)
-        self.zamowienia_tree = self.create_zamowienie_tree(self.main_frame, 'Zamówienia') 
-        self.inside_frame(frame="main", startup=True)
+        self.zamowienia_tree = self.stworz_zamowienie_tree(self.main_frame, 'Zamówienia') 
+        self.button_manager(frame="main", startup=True)
         self.load_zamowienia()
         
         self.zamowienia_tree.bind("<Double-1>", self.on_double_click)
         self.main_frame.grid(row=0, column=1, columnspan=3, rowspan=5, sticky="nsew", padx=5, pady=5, ipadx=5)
 
-    def inside_frame(self, frame, commend = 'main', startup = False):
+    def button_manager(self, frame, commend = 'main', startup = False):
         if startup == False:
             for widget in self.main_frame.winfo_children():
                 widget.destroy()
@@ -75,6 +75,8 @@ class FolderApp:
             self.button_lista_artykulow(self.button_frame)
             self.button_lista_sklepow(self.button_frame)
             self.button_lista_kupujacych(self.button_frame)
+            self.button_lista_kategorii(self.button_frame)
+            self.button_lista_firm(self.button_frame)
             self.button_refresh_zamowienia(self.button_frame)   
 
         elif frame == "lista dodanych do zamowienia":
@@ -83,15 +85,29 @@ class FolderApp:
 
         elif frame == "kupujacy":
             self.button_dodaj_kupujacy(self.button_frame)
+            self.button_nazwa_kupujacy(self.button_frame)
+            self.button_usun_kupujacy(self.button_frame)
 
         elif frame == "sklepy":
             self.button_dodaj_sklep(self.button_frame) 
+            self.button_usun_sklep(self.button_frame)
+
+        elif frame == "firmy":
+            self.button_dodaj_firma(self.button_frame) 
+            self.button_usun_firma(self.button_frame)
 
         elif frame == "artykuly":
-            self.button_create_artykul(self.button_frame) 
+            self.button_stworz_artykul(self.button_frame) 
+            self.button_zniszcz_artykul(self.button_frame)
 
-        elif frame == "add_zamowienie":
+        elif frame == "dodaj_zamowienie":
             self.buttons_zatwierdz_zamowienia(self.button_frame) 
+            self.button_dodaj_kupujacy(self.button_frame)
+            self.button_dodaj_sklep(self.button_frame) 
+
+        elif frame == "kategorie":
+            self.button_dodaj_kategoria(self.button_frame) 
+            self.button_usun_kategorie(self.button_frame)
 
         elif frame == 'tworzenie_artykuly':
             self.button_dodaj_kategoria(self.button_frame) 
@@ -103,7 +119,7 @@ class FolderApp:
         self.main_frame.grid(row=0, column=1, columnspan=3, rowspan=5, sticky="nsew", padx=5, pady=5, ipadx=5)
 
 
-    def create_inside_tree(self, parent_frame, label_text):
+    def stworz_inside_tree(self, parent_frame, label_text):
         label = ttk.Label(parent_frame, text=label_text, font=("Arial", 12))
         label.pack(pady=5)
 
@@ -137,7 +153,7 @@ class FolderApp:
 
         return tree  
 
-    def create_artykuly_tree(self, parent_frame, label_text):
+    def stworz_artykuly_tree(self, parent_frame, label_text):
         label = ttk.Label(parent_frame, text=label_text, font=("Arial", 12))
         tree = ttk.Treeview(parent_frame, columns=("id", 'Kategoria', 'Firma', 'artykul','Kolor','szczegoly'), show='headings')
         label.pack(pady=5)
@@ -164,7 +180,7 @@ class FolderApp:
 
         return tree       
 
-    def create_name_tree(self, parent_frame, label_text, status):
+    def stworz_name_tree(self, parent_frame, label_text, status):
         label = ttk.Label(parent_frame, text=label_text, font=("Arial", 12))
         label.pack(pady=5)
 
@@ -178,7 +194,7 @@ class FolderApp:
 
         return tree  
 
-    def create_zamowienie_tree(self, parent_frame, label_text):
+    def stworz_zamowienie_tree(self, parent_frame, label_text):
         label = ttk.Label(parent_frame, text=label_text, font=("Arial", 12))
         tree = ttk.Treeview(parent_frame, columns=("id_zamowiania", 'Data', 'Kupujacy', 'Sklep','Rabat jednostkowy','Rabat procentowy', 'Cena', "Cena_po_rabacie"), show='headings')
         label.pack(pady=5)
@@ -317,9 +333,9 @@ class FolderApp:
 
 
     def load_inside_zamowienie(self, id_zamowienia):
-        self.delete_all_widgets()
-        self.inside_frame("lista dodanych do zamowienia")
-        self.inside_tree = self.create_inside_tree(self.main_frame, 'Lista artykułów dodatych do zamówienia') 
+        self.usun_all_widgets()
+        self.button_manager("lista dodanych do zamowienia")
+        self.inside_tree = self.stworz_inside_tree(self.main_frame, 'Lista artykułów dodatych do zamówienia') 
         self.inside_tree.delete(*self.inside_tree.get_children())
 
         wynik_all = self.db_session.execute(
@@ -374,21 +390,21 @@ class FolderApp:
 
         if selected_item:
             artykul_id = self.artykuly_tree.item(selected_item[0], 'values')[0]
-            self.add_artykul_do_zamowienie(self.zamowienie_id, artykul_id)
+            self.dodaj_artykul_do_zamowienie(self.zamowienie_id, artykul_id)
             self.load_inside_zamowienie(self.zamowienie_id)
 
-    def add_zamowienie(self):
+    def dodaj_zamowienie(self):
         self.secend_frame = ttk.Frame(self.master, padding=5)
         self.third_frame = ttk.Frame(self.master, padding=5)
 
-        self.inside_frame("add_zamowienie")
+        self.button_manager("dodaj_zamowienie")
 
         self.main_frame.grid(row=0, column=1, columnspan=2, rowspan=1, sticky="nsew", padx=5, pady=5, ipadx=5)
         self.secend_frame.grid(row=1, column=1, columnspan=2, rowspan=3, sticky="nsew", padx=5, pady=5, ipadx=5)
         self.third_frame.grid(row=0, column=3, columnspan=1, rowspan=4, sticky="nsew", padx=5, pady=5, ipadx=5)
                 
-        self.kupujacy_tree = self.create_name_tree(self.main_frame, "Kupujacy", False)
-        self.sklepy_tree = self.create_name_tree(self.secend_frame, "Sklepy", True)
+        self.kupujacy_tree = self.stworz_name_tree(self.main_frame, "Kupujacy", False)
+        self.sklepy_tree = self.stworz_name_tree(self.secend_frame, "Sklepy", True)
         
         self.load_kupujacy()
         self.load_sklepy()
@@ -470,17 +486,23 @@ class FolderApp:
         zamowienie_id = self.zamowienia_tree.item(self.zamowienia_tree.selection()[0], 'values')[0]
         obj = self.db_session.query(Zamowienie).filter_by(id=zamowienie_id).first()
 
-    def delete_zamowienie(self):
+    def usun_zamowienie(self):
         selected_item = self.zamowienia_tree.selection()
         if not selected_item:
             return
-        
-        dialog = simpledialog.askstring("Usuń", "Czy jesteś pewien usunięcia projektu:\n\nCzynność NIE odwracalna\n\nNapisz YES lub TAK \t\t\t")
-        if dialog == "YES" or dialog == "TAK" or dialog == "tak" or dialog == "yes":
-            zamowienie_id = self.zamowienia_tree.item(self.zamowienia_tree.selection()[0], 'values')[0]
-            obj = self.db_session.query(Zamowienie).filter_by(id=zamowienie_id).first()
-            self.db_session.delete(obj)
+
+        dialog = simpledialog.askstring(
+            "Usuń", "Czy jesteś pewien usunięcia zamówienia:\n\n"
+                    "Czynność NIEodwracalna\n\n"
+                    "Napisz YES lub TAK \t\t\t"
+        )
+
+        if dialog and dialog.lower() in ["yes", "tak"]:
+            zamowienie_id = self.zamowienia_tree.item(selected_item[0], 'values')[0]
+            
+            self.db_session.query(Zamowienie).filter_by(id=zamowienie_id).delete(synchronize_session=False)
             self.db_session.commit()
+            self.load_zamowienia()  
 
     def del_artykul_do_zamowienie(self):
         selected_item = self.inside_tree.selection()
@@ -502,25 +524,43 @@ class FolderApp:
 
         self.load_zamowienia()
 
-    def create_artykul(self):
-        self.delete_all_widgets()
+    def stworz_artykul(self):
+        self.usun_all_widgets()
         self.secend_frame = ttk.Frame(self.master, padding=5)
         self.third_frame = ttk.Frame(self.master, padding=5)
 
-        self.inside_frame("tworzenie_artykuly")
+        self.button_manager("tworzenie_artykuly")
         self.main_frame.grid(row=0, column=1, columnspan=2, rowspan=2, sticky="nsew", padx=5, pady=5, ipadx=5)
         self.secend_frame.grid(row=2, column=1, columnspan=2, rowspan=2, sticky="nsew", padx=5, pady=5, ipadx=5)
         self.third_frame.grid(row=0, column=3, columnspan=1, rowspan=2, sticky="nsew", padx=5, pady=5, ipadx=5)
         
-        self.firmy_tree = self.create_name_tree(self.main_frame, "Lista Firm", True)
-        self.kategorie_tree = self.create_name_tree(self.secend_frame, "Kategorie Lista", True)
-        self.artykuly_tree = self.create_name_tree(self.third_frame, "Kategorie Lista", True)
+        self.firmy_tree = self.stworz_name_tree(self.main_frame, "Lista Firm", True)
+        self.kategorie_tree = self.stworz_name_tree(self.secend_frame, "Kategorie Lista", True)
+        self.artykuly_tree = self.stworz_name_tree(self.third_frame, "Kategorie Lista", True)
         
         self.load_kategorie()
         self.load_firmy()
 
 
-    def add_artykul_do_zamowienie(self, zamowienie, id_art):
+    def zniszcz_artykul(self):
+        selected_item = self.artykuly_tree.selection()
+        if not selected_item:
+            return
+
+        dialog = simpledialog.askstring(
+            "Usuń", "Czy jesteś pewien usunięcia artykułu:\n\n"
+                    "Czynność NIEodwracalna\n\n"
+                    "Napisz YES lub TAK \t\t\t"
+        )
+
+        if dialog and dialog.lower() in ["yes", "tak"]:
+            artykul_id = self.artykuly_tree.item(selected_item[0], 'values')[0]
+            self.db_session.query(Artykul_Lista).filter_by(id=artykul_id).delete(synchronize_session=False)
+            self.db_session.commit()
+            self.powrot_do_lista_artykulow()
+
+
+    def dodaj_artykul_do_zamowienie(self, zamowienie, id_art):
         self.db_session.execute(artykuly_relacja.insert().values(
             zamowienie_id = zamowienie,
             artykul_id = id_art,
@@ -529,73 +569,176 @@ class FolderApp:
         ))
         self.db_session.commit()
 
-    def add_kupujacy(self):
-        kupujacy_name = simpledialog.askstring("Dodaj Kupującego", "Podaj nazwę KUPUJACEGO: \t\t\t")
+    def stworz_kupujacy(self):
+        kupujacy_name = simpledialog.askstring("Dodaj Kupującego", "Podaj nazwę KUPUJĄCEGO: \t\t\t")
         if kupujacy_name is not None:
             kupujacy = Kupujacy(nazwa=kupujacy_name)
             self.db_session.add(kupujacy)
             self.db_session.commit()
-        self.load_kupujacy()    
+            self.load_kupujacy()    
+        
+    def zmien_nazwa_kupujacy(self):
+        selected_item = self.kupujacy_tree.selection()
+        if not selected_item:
+            return
 
-    def add_sklep(self):
+        element_value = self.kupujacy_tree.item(selected_item[0], 'values')
+        kupujacy_id = element_value[0]
+        stara_nazwa = element_value[1]
+
+        new_value = simpledialog.askstring("Edit",'Nowa wartość\t\t\t', initialvalue=stara_nazwa)
+
+        if new_value and new_value.strip():
+            kupujacy = self.db_session.query(Kupujacy).filter_by(id=kupujacy_id).first()
+
+            if kupujacy:
+                kupujacy.nazwa = new_value 
+                self.db_session.commit()
+                self.load_kupujacy() 
+
+    def usun_kupujacego(self):
+        selected_item = self.kupujacy_tree.selection()
+        if not selected_item:
+            return
+        
+        dialog = simpledialog.askstring(
+            "Usuń", "Czy jesteś pewien usunięcia kupującego:\n\n"
+                    "Czynność NIEodwracalna\n\n"
+                    "Napisz YES lub TAK \t\t\t"
+        )
+
+        if dialog and dialog.lower() in ["yes", "tak"]:
+            kupujacy_id = self.kupujacy_tree.item(self.kupujacy_tree.selection()[0], 'values')[0]
+            obj = self.db_session.query(Kupujacy).filter_by(id=kupujacy_id).first()
+            self.db_session.delete(obj)
+            self.db_session.commit()
+            self.load_kupujacy()    
+
+
+    def stworz_sklep(self):
         sklep_name = simpledialog.askstring("Dodaj Sklep", "Podaj nazwę SKLEPU: \t\t\t")
         if sklep_name is not None:
             sklep = Sklep(nazwa=sklep_name)
             self.db_session.add(sklep)
             self.db_session.commit()
-        self.load_sklepy()    
+            self.load_sklepy()    
+        
 
-    def add_firma(self):
+    def usun_sklep(self):
+        selected_item = self.sklepy_tree.selection()
+        if not selected_item:
+            return
+        
+        dialog = simpledialog.askstring(
+            "Usuń", "Czy jesteś pewien usunięcia sklepu:\n\n"
+                    "Czynność NIEodwracalna\n\n"
+                    "Napisz YES lub TAK \t\t\t"
+        )
+
+        if dialog and dialog.lower() in ["yes", "tak"]:
+            sklep_id = self.sklepy_tree.item(self.sklepy_tree.selection()[0], 'values')[0]
+            obj = self.db_session.query(Sklep).filter_by(id=sklep_id).first()
+            self.db_session.delete(obj)
+            self.db_session.commit()
+            self.load_sklepy()    
+
+
+    def stworz_firma(self):
         firma_name = simpledialog.askstring("Dodaj firme", "Podaj nazwę FIRMY: \t\t\t")
         if firma_name is not None:
             firma = Firma(nazwa=firma_name)
             self.db_session.add(firma)
             self.db_session.commit()
-        self.load_firmy()    
+            self.load_firmy()    
+        
 
-    def add_kategoria(self):
+    def usun_firma(self):
+        selected_item = self.firmy_tree.selection()
+        if not selected_item:
+            return
+        
+        dialog = simpledialog.askstring(
+            "Usuń", "Czy jesteś pewien usunięcia firmy:\n\n"
+                    "Czynność NIEodwracalna\n\n"
+                    "Napisz YES lub TAK \t\t\t"
+        )
+
+        if dialog and dialog.lower() in ["yes", "tak"]:
+            firma_id = self.firmy_tree.item(self.firmy_tree.selection()[0], 'values')[0]
+            obj = self.db_session.query(Firma).filter_by(id=firma_id).first()
+            self.db_session.delete(obj)
+            self.db_session.commit()
+            self.load_firmy()    
+
+
+    def stworz_kategoria(self):
         kategoria_name = simpledialog.askstring("Dodaj kategorie", "Podaj nazwę KATEGORII: \t\t\t")
         if kategoria_name is not None:
             kategoria = Kategoria(nazwa=kategoria_name)
             self.db_session.add(kategoria)
             self.db_session.commit()
-        self.load_kategorie()    
+            self.load_kategorie()    
+        
 
-    def add_list_artykulow(self):
+    def usun_kategorie(self):
+        selected_item = self.kategorie_tree.selection()
+        if not selected_item:
+            return
+        
+        dialog = simpledialog.askstring(
+            "Usuń", "Czy jesteś pewien usunięcia kategorii:\n\n"
+                    "Czynność NIEodwracalna\n\n"
+                    "Napisz YES lub TAK \t\t\t"
+        )
+
+        if dialog and dialog.lower() in ["yes", "tak"]:
+            kategoria_id = self.kategorie_tree.item(self.kategorie_tree.selection()[0], 'values')[0]
+            obj = self.db_session.query(Kategoria).filter_by(id=kategoria_id).first()
+            self.db_session.delete(obj)
+            self.db_session.commit()
+            self.load_kategorie()    
+
+
+    def dodaj_list_artykulow(self):
         self.list_artykulow()
         self.artykuly_tree.bind("<Double-1>", self.on_double_click_inside)
 
     def list_kupujacy(self):
-        self.inside_frame("kupujacy")
-        self.kupujacy_tree = self.create_name_tree(self.main_frame, "Kupujacy", True)
+        self.button_manager("kupujacy")
+        self.kupujacy_tree = self.stworz_name_tree(self.main_frame, "Kupujacy", True)
         self.load_kupujacy()
 
     def list_firmy(self):
-        self.inside_frame("firmy")
-        self.firmy_tree = self.create_name_tree(self.main_frame, "Kupujacy", True)
-        self.load_kupujacy()
+        self.button_manager("firmy")
+        self.firmy_tree = self.stworz_name_tree(self.main_frame, "Firmy", True)
+        self.load_firmy()
 
     def list_sklepy(self):
-        self.inside_frame("sklepy")
-        self.sklepy_tree = self.create_name_tree(self.main_frame, "Sklepy", True)
+        self.button_manager("sklepy")
+        self.sklepy_tree = self.stworz_name_tree(self.main_frame, "Sklepy", True)
         self.load_sklepy()
+
+    def list_kategorie(self):
+        self.button_manager("kategorie")
+        self.kategorie_tree = self.stworz_name_tree(self.main_frame, "Kategorie", True)
+        self.load_kategorie()
 
     def list_artykulow(self):
         self.secend_frame = ttk.Frame(self.master, padding=5)
 
-        self.inside_frame("artykuly")
+        self.button_manager("artykuly")
         self.main_frame.grid(row=0, column=1, columnspan=1, rowspan=5, sticky="nsew", padx=5, pady=5, ipadx=5)
         self.secend_frame.grid(row=0, column=2, columnspan=2, rowspan=5, sticky="nsew", padx=5, pady=5, ipadx=5)
         
-        self.kategorie_tree = self.create_name_tree(self.main_frame, "Kategorie Lista", True)
-        self.artykuly_tree = self.create_artykuly_tree(self.secend_frame, "Artykuły Lista")
+        self.kategorie_tree = self.stworz_name_tree(self.main_frame, "Kategorie Lista", True)
+        self.artykuly_tree = self.stworz_artykuly_tree(self.secend_frame, "Artykuły Lista")
         self.load_kategorie()
         self.load_artykuly()
 
     def refresh(self):
         pass
 
-    def delete_all_widgets(self):
+    def usun_all_widgets(self):
         if self.secend_frame:
             self.secend_frame.destroy()
 
@@ -609,14 +752,14 @@ class FolderApp:
             widget.destroy()
 
     def button_icon_pack(self):
-        self.add_zamowienie_icon = PhotoImage(file=os.path.join(self.dsc, "image", "add_project_icon.png")).subsample(20, 20)
-        self.edit_zamowienie_icon = PhotoImage(file=os.path.join(self.dsc, "image", "edit_project_icon.png")).subsample(20, 20)
-        self.add_art_icon = PhotoImage(file=os.path.join(self.dsc, "image", "edit_project_icon.png")).subsample(20, 20)
-        self.delete_zamowienie_icon = PhotoImage(file=os.path.join(self.dsc, "image", "delete_project_icon.png")).subsample(20, 20)
-        self.add_zamowienie_inside_icon = PhotoImage(file=os.path.join(self.dsc, "image", "edit_project_icon.png")).subsample(20, 20)
+        self.stworz_zamowienie_icon = PhotoImage(file=os.path.join(self.dsc, "image", "delete_project_icon.png")).subsample(20, 20)
+        self.edit_zamowienie_icon = PhotoImage(file=os.path.join(self.dsc, "image", "delete_project_icon.png")).subsample(20, 20)
+        self.stworz_art_icon = PhotoImage(file=os.path.join(self.dsc, "image", "delete_project_icon.png")).subsample(20, 20)
+        self.usun_zamowienie_icon = PhotoImage(file=os.path.join(self.dsc, "image", "delete_project_icon.png")).subsample(20, 20)
+        self.stworz_zamowienie_inside_icon = PhotoImage(file=os.path.join(self.dsc, "image", "delete_project_icon.png")).subsample(20, 20)
         self.backButton_icon = PhotoImage(file=os.path.join(self.dsc, "image", "delete_project_icon.png")).subsample(20, 20)
-        self.dodaj_kupujacego_inside_icon = PhotoImage(file=os.path.join(self.dsc, "image", "delete_project_icon.png")).subsample(20, 20)
-        self.dodaj_sklep_inside_icon = PhotoImage(file=os.path.join(self.dsc, "image", "delete_project_icon.png")).subsample(20, 20)
+        self.stworz_kupujacego_inside_icon = PhotoImage(file=os.path.join(self.dsc, "image", "delete_project_icon.png")).subsample(20, 20)
+        self.stworz_sklep_inside_icon = PhotoImage(file=os.path.join(self.dsc, "image", "delete_project_icon.png")).subsample(20, 20)
         self.refresh_element_icon = PhotoImage(file=os.path.join(self.dsc, "image", "delete_project_icon.png")).subsample(20, 20)
 
     def button_back_pack(self, frame, commend = "main"):
@@ -625,92 +768,112 @@ class FolderApp:
         elif commend == "lista_artykułów":
             commend = self.powrot_do_lista_artykulow
 
-        self.add_button = ttk.Button(frame, text="Wróć", command=commend, width = 10, image=self.backButton_icon, compound="left")
-        self.add_button.pack(side='bottom', padx=1, pady=3) 
+        self.dodaj_button = ttk.Button(frame, text="Wróć", command=commend, width = 10, image=self.backButton_icon, compound="left")
+        self.dodaj_button.pack(side='bottom', padx=1, pady=3) 
 
     def powrot_do_glownego_okna(self):
-        self.delete_all_widgets()
+        self.usun_all_widgets()
 
         self.start_frame()
         self.load_zamowienia()
 
     def powrot_do_lista_artykulow(self):
-        self.delete_all_widgets()
+        self.usun_all_widgets()
 
         self.start_frame()
         self.list_artykulow()
 
     def button_dodaj_zamowienie(self, frame):
-        self.add_button = ttk.Button(frame, text="Dodaj\nzamówienie", command=self.add_zamowienie, width = 10, image=self.add_zamowienie_icon, compound="left",)
-        self.add_button.pack(side='top', padx=1, pady=3)
+        self.dodaj_button = ttk.Button(frame, text="Dodaj\nzamówienie", command=self.dodaj_zamowienie, width = 10, image=self.usun_zamowienie_icon, compound="left",)
+        self.dodaj_button.pack(side='top', padx=1, pady=3)
 
     def button_modyfikuj_zamowienie(self, frame):
-        self.add_button = ttk.Button(frame, text="Edytuj\nzamówienie", command=self.mod_zamowienie, width = 10, image=self.edit_zamowienie_icon, compound="left")
-        self.add_button.pack(side='top', padx=1, pady=3)
+        self.dodaj_button = ttk.Button(frame, text="Edytuj\nzamówienie", command=self.mod_zamowienie, width = 10, image=self.usun_zamowienie_icon, compound="left")
+        self.dodaj_button.pack(side='top', padx=1, pady=3)
 
     def button_usun_zamowienie(self, frame):
-        self.add_button = ttk.Button(frame, text="Usuń\nzamówienie", command=self.delete_zamowienie, width = 10, image=self.delete_zamowienie_icon, compound="left")
-        self.add_button.pack(side='top', padx=1, pady=3)
+        self.dodaj_button = ttk.Button(frame, text="Usuń\nzamówienie", command=self.usun_zamowienie, width = 10, image=self.usun_zamowienie_icon, compound="left")
+        self.dodaj_button.pack(side='top', padx=1, pady=3)
         
     def buttons_zatwierdz_zamowienia(self, frame):
-        self.add_button = ttk.Button(frame, text="Zatwierdź\nzamówienie", command=self.zatwierdz_zamowienie, width = 10, image=self.add_zamowienie_inside_icon, compound="left")
-        self.add_button.pack(side='top', padx=1, pady=3)
+        self.dodaj_button = ttk.Button(frame, text="Zatwierdź\nzamówienie", command=self.zatwierdz_zamowienie, width = 10, image=self.usun_zamowienie_icon, compound="left")
+        self.dodaj_button.pack(side='top', padx=1, pady=(3,30))
 
     def button_lista_artykulow(self, frame):
-        self.add_button = ttk.Button(frame, text="Lista\nartykułów", command=self.list_artykulow, width = 10, image=self.delete_zamowienie_icon, compound="left")
-        self.add_button.pack(side='top', padx=1, pady=(30,3))
+        self.dodaj_button = ttk.Button(frame, text="Lista\nartykułów", command=self.list_artykulow, width = 10, image=self.usun_zamowienie_icon, compound="left")
+        self.dodaj_button.pack(side='top', padx=1, pady=(30,30))
 
     def button_lista_sklepow(self, frame):
-        self.add_button = ttk.Button(frame, text="Lista\nsklepów", command=self.list_sklepy, width = 10, image=self.delete_zamowienie_icon, compound="left")
-        self.add_button.pack(side='top', padx=1, pady=3)
+        self.dodaj_button = ttk.Button(frame, text="Lista\nsklepów", command=self.list_sklepy, width = 10, image=self.usun_zamowienie_icon, compound="left")
+        self.dodaj_button.pack(side='top', padx=1, pady=3)
+
+    def button_lista_firm(self, frame):
+        self.dodaj_button = ttk.Button(frame, text="Lista\nfirm", command=self.list_firmy, width = 10, image=self.usun_zamowienie_icon, compound="left")
+        self.dodaj_button.pack(side='top', padx=1, pady=3)
 
     def button_lista_kupujacych(self, frame):
-        self.add_button = ttk.Button(frame, text="Lista\nkupujących", command=self.list_kupujacy, width = 10, image=self.delete_zamowienie_icon, compound="left")
-        self.add_button.pack(side='top', padx=1, pady=3)
+        self.dodaj_button = ttk.Button(frame, text="Lista\nkupujących", command=self.list_kupujacy, width = 10, image=self.usun_zamowienie_icon, compound="left")
+        self.dodaj_button.pack(side='top', padx=1, pady=3)    
+        
+    def button_lista_kategorii(self, frame):
+        self.dodaj_button = ttk.Button(frame, text="Lista\nkategorii", command=self.list_kategorie, width = 10, image=self.usun_zamowienie_icon, compound="left")
+        self.dodaj_button.pack(side='top', padx=1, pady=3)
 
-    def button_create_artykul(self, frame):
-        self.add_button = ttk.Button(frame, text="Stwórz\nartykuł", command=self.create_artykul, width = 10, image=self.add_art_icon, compound="left")
-        self.add_button.pack(side='top', padx=1, pady=3)       
+    def button_stworz_artykul(self, frame):
+        self.dodaj_button = ttk.Button(frame, text="Stwórz\nartykuł", command=self.stworz_artykul, width = 10, image=self.usun_zamowienie_icon, compound="left")
+        self.dodaj_button.pack(side='top', padx=1, pady=3)       
+
+    def button_zniszcz_artykul(self, frame):
+        self.dodaj_button = ttk.Button(frame, text="Usuń\nartykuł", command=self.zniszcz_artykul, width = 10, image=self.usun_zamowienie_icon, compound="left")
+        self.dodaj_button.pack(side='top', padx=1, pady=3)   
 
     def button_dodaj_artykul_zamowienie(self, frame):
-        self.add_button = ttk.Button(frame, text="Dodaj\nartykuł do\nzamowienia", command=self.add_list_artykulow, width = 10, image=self.add_art_icon, compound="left")
-        self.add_button.pack(side='top', padx=1, pady=3)
+        self.dodaj_button = ttk.Button(frame, text="Dodaj\nartykuł do\nzamowienia", command=self.dodaj_list_artykulow, width = 10, image=self.usun_zamowienie_icon, compound="left")
+        self.dodaj_button.pack(side='top', padx=1, pady=3)
 
     def button_usun_artykul_zamowienie(self, frame):
-        self.add_button = ttk.Button(frame, text="Usuń\nartykuł z\nzamówienia", command=self.del_artykul_do_zamowienie, width = 10, image=self.delete_zamowienie_icon, compound="left")
-        self.add_button.pack(side='top', padx=1, pady=3)
+        self.dodaj_button = ttk.Button(frame, text="Usuń\nartykuł z\nzamówienia", command=self.del_artykul_do_zamowienie, width = 10, image=self.usun_zamowienie_icon, compound="left")
+        self.dodaj_button.pack(side='top', padx=1, pady=3)
 
     def button_dodaj_kupujacy(self, frame):
-        self.add_button = ttk.Button(frame, text="Dodaj\nkupującego", command=self.add_kupujacy, width = 10, image=self.dodaj_kupujacego_inside_icon, compound="left")
-        self.add_button.pack(side='top', padx=1, pady=3)        
+        self.dodaj_button = ttk.Button(frame, text="Dodaj\nkupującego", command=self.stworz_kupujacy, width = 10, image=self.usun_zamowienie_icon, compound="left")
+        self.dodaj_button.pack(side='top', padx=1, pady=3)        
+
+    def button_nazwa_kupujacy(self, frame):
+        self.dodaj_button = ttk.Button(frame, text="Zmień\nnazwę\nkupującego", command=self.zmien_nazwa_kupujacy, width = 10, image=self.usun_zamowienie_icon, compound="left")
+        self.dodaj_button.pack(side='top', padx=1, pady=3) 
 
     def button_usun_kupujacy(self, frame):
-        self.add_button = ttk.Button(frame, text="Usuń\nkupującego", command=self.refresh, width = 10, image=self.dodaj_kupujacego_inside_icon, compound="left")
-        self.add_button.pack(side='top', padx=1, pady=3) 
+        self.dodaj_button = ttk.Button(frame, text="Usuń\nkupującego", command=self.usun_kupujacego, width = 10, image=self.usun_zamowienie_icon, compound="left")
+        self.dodaj_button.pack(side='top', padx=1, pady=3) 
 
     def button_dodaj_sklep(self, frame):
-        self.add_button = ttk.Button(frame, text="Dodaj\nsklep", command=self.add_sklep, width = 10, image=self.dodaj_sklep_inside_icon, compound="left")
-        self.add_button.pack(side='top', padx=1, pady=3)
+        self.dodaj_button = ttk.Button(frame, text="Dodaj\nsklep", command=self.stworz_sklep, width = 10, image=self.usun_zamowienie_icon, compound="left")
+        self.dodaj_button.pack(side='top', padx=1, pady=3)
 
     def button_usun_sklep(self, frame):
-        self.add_button = ttk.Button(frame, text="Usuń\nsklep", command=self.refresh, width = 10, image=self.dodaj_kupujacego_inside_icon, compound="left")
-        self.add_button.pack(side='top', padx=1, pady=3)
+        self.dodaj_button = ttk.Button(frame, text="Usuń\nsklep", command=self.usun_sklep, width = 10, image=self.usun_zamowienie_icon, compound="left")
+        self.dodaj_button.pack(side='top', padx=1, pady=3)
 
     def button_dodaj_firma(self, frame):
-        self.add_button = ttk.Button(frame, text="Dodaj\nfirma", command=self.add_firma, width = 10, image=self.add_zamowienie_icon, compound="left")
-        self.add_button.pack(side='top', padx=1, pady=3)
+        self.dodaj_button = ttk.Button(frame, text="Dodaj\nfirma", command=self.stworz_firma, width = 10, image=self.usun_zamowienie_icon, compound="left")
+        self.dodaj_button.pack(side='top', padx=1, pady=3)
+
+    def button_usun_firma(self, frame):
+        self.dodaj_button = ttk.Button(frame, text="Usuń\nfirma", command=self.usun_firma, width = 10, image=self.usun_zamowienie_icon, compound="left")
+        self.dodaj_button.pack(side='top', padx=1, pady=3)
 
     def button_dodaj_kategoria(self, frame):
-        self.add_button = ttk.Button(frame, text="Dodaj\nkategoria", command=self.add_kategoria, width = 10, image=self.add_zamowienie_icon, compound="left")
-        self.add_button.pack(side='top', padx=1, pady=3)
+        self.dodaj_button = ttk.Button(frame, text="Dodaj\nkategoria", command=self.stworz_kategoria, width = 10, image=self.usun_zamowienie_icon, compound="left")
+        self.dodaj_button.pack(side='top', padx=1, pady=3)
 
     def button_usun_kategorie(self, frame):
-        self.add_button = ttk.Button(frame, text="Usuń\nkategorie", command=self.refresh, width = 10, image=self.dodaj_kupujacego_inside_icon, compound="left")
-        self.add_button.pack(side='top', padx=1, pady=3)
+        self.dodaj_button = ttk.Button(frame, text="Usuń\nkategorie", command=self.usun_kategorie, width = 10, image=self.usun_zamowienie_icon, compound="left")
+        self.dodaj_button.pack(side='top', padx=1, pady=3)
 
     def button_refresh_zamowienia(self, frame):
-        self.add_button = ttk.Button(frame, text="Odśwież", command=self.load_zamowienia, width = 10, image=self.refresh_element_icon, compound="left")
-        self.add_button.pack(side='bottom', padx=1, pady=3)
+        self.dodaj_button = ttk.Button(frame, text="Odśwież", command=self.load_zamowienia, width = 10, image=self.refresh_element_icon, compound="left")
+        self.dodaj_button.pack(side='bottom', padx=1, pady=3)
 
 if __name__ == "__main__":
     root = TkinterDnD.Tk()  # Use TkinterDnD for DnD
